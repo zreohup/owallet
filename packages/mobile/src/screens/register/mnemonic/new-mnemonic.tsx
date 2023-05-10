@@ -209,7 +209,7 @@ export const NewMnemonicScreen: FunctionComponent = observer(props => {
     >
       {/* Mock for flexible margin top */}
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>Create new wallet</Text>
+        <Text style={styles.title}>Create a new wallet</Text>
         <View>
           <OWalletLogo size={72} />
         </View>

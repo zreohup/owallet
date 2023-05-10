@@ -116,7 +116,7 @@ export const VerifyMnemonicScreen: FunctionComponent = observer(props => {
       backgroundColor={colors['plain-background']}
     >
       <View style={styles.headerView}>
-        <Text style={styles.titleHeaderView}>Create new wallet</Text>
+        <Text style={styles.titleHeaderView}>Create a new wallet</Text>
         <View>
           <OWalletLogo size={72} />
         </View>

@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   containerHeader: {
     alignItems: 'center',
     padding: 18,
-    marginTop: metrics.screenHeight * 0.11
+    marginTop: metrics.screenHeight * 0.08
   },
   containerUnion: { paddingTop: 20, paddingBottom: 16 },
 });

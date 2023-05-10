@@ -16,9 +16,11 @@ import {
 } from '@src/screens/register/mnemonic';
 import { NewLedgerScreen } from '@src/screens/register/ledger';
 import { RegisterEndScreen } from '@src/screens/register/end';
-import { colors } from '@src/themes';
+
+import OWButtonIcon from '@src/components/button/ow-button-icon';
 const Stack = createStackNavigator();
 export const RegisterNavigation: FC = () => {
+  const { colors } = useTheme();
   const { appInitStore } = useStore();
   const handleScreenOptions = ({ route, navigation }) => {
     const headerOptions = useHeaderOptions(
@@ -40,6 +42,31 @@ export const RegisterNavigation: FC = () => {
     >
       <Stack.Screen
         name={SCREENS.RegisterIntro}
+        options={({ navigation }) => ({
+          headerShown: true,
+          headerTitle: '',
+          headerStyle: {
+            backgroundColor: colors['plain-background'],
+            shadowColor: 'transparent',
+            shadowRadius: 0,
+            elevation: 0
+          },
+          headerLeft: () => {
+            if (navigation.canGoBack()){
+              return (
+                <OWButtonIcon
+                  colorIcon={colors['primary-text']}
+                  onPress={() => navigation.goBack()}
+                  name="arrow-left"
+                  style={styles.btnIcon}
+                  sizeIcon={20}
+                />
+              );
+            }
+             
+            return null;
+          }
+        })}
         component={
           appInitStore.getInitApp.status
             ? OnboardingIntroScreen
@@ -81,4 +108,8 @@ export const RegisterNavigation: FC = () => {
     </Stack.Navigator>
   );
 };
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  btnIcon: {
+    paddingRight: 20
+  }
+});
