@@ -6,6 +6,7 @@ export const HEADER_KEY = {
 };
 export const defaultAll = { label: 'All', value: 'All', image: images.crypto };
 export const SCREENS = {
+  CreateANewWallet: 'CreateANewWallet',
   Home: 'Home',
   TransactionDetail: 'Transactions.Detail',
   RegisterMain: 'RegisterMain',
@@ -131,7 +132,7 @@ export const SCREENS_OPTIONS: IScreenOption = {
   },
   [SCREENS.TransferTokensScreen]: {
     title: HEADER_KEY.showNetworkHeader,
-    showTabBar:true
+    showTabBar: true
   },
   [SCREENS.RegisterIntro]: {
     title: HEADER_KEY.notShowHeader
@@ -245,6 +246,9 @@ export const SCREENS_OPTIONS: IScreenOption = {
   },
   [SCREENS.Undelegate]: {
     title: HEADER_KEY.showNetworkHeader
+  },
+  [SCREENS.CreateANewWallet]: {
+    title: null
   },
   [SCREENS.STACK.Unlock]: {
     title: ''

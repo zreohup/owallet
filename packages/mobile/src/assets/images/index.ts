@@ -11,6 +11,7 @@ const images = {
    eye: require('./eye.png'),
    fail: require('./fail.png'),
    fail_dark: require('./fail_dark.png'),
+   google: require('./google.png'),
    line_dark_pending_long: require('./line-dark-pending-long.png'),
    line_fail_long_dark: require('./line_fail_long_dark.png'),
    line_fail_short: require('./line_fail_short.png'),

@@ -18,7 +18,33 @@ import { NewLedgerScreen } from '@src/screens/register/ledger';
 import { RegisterEndScreen } from '@src/screens/register/end';
 
 import OWButtonIcon from '@src/components/button/ow-button-icon';
+import CreateANewWalletScreen from '@src/screens/register/create-a-new-wallet-screen';
 const Stack = createStackNavigator();
+const registerOptionsWithGoBack = ({ navigation, colors }): any => ({
+  headerShown: true,
+  headerTitle: '',
+  headerStyle: {
+    backgroundColor: colors['plain-background'],
+    shadowColor: 'transparent',
+    shadowRadius: 0,
+    elevation: 0
+  },
+  headerLeft: () => {
+    if (navigation.canGoBack()) {
+      return (
+        <OWButtonIcon
+          colorIcon={colors['primary-text']}
+          onPress={() => navigation.goBack()}
+          name="arrow-left"
+          style={styles.btnIcon}
+          sizeIcon={20}
+        />
+      );
+    }
+
+    return null;
+  }
+});
 export const RegisterNavigation: FC = () => {
   const { colors } = useTheme();
   const { appInitStore } = useStore();
@@ -42,31 +68,9 @@ export const RegisterNavigation: FC = () => {
     >
       <Stack.Screen
         name={SCREENS.RegisterIntro}
-        options={({ navigation }) => ({
-          headerShown: true,
-          headerTitle: '',
-          headerStyle: {
-            backgroundColor: colors['plain-background'],
-            shadowColor: 'transparent',
-            shadowRadius: 0,
-            elevation: 0
-          },
-          headerLeft: () => {
-            if (navigation.canGoBack()){
-              return (
-                <OWButtonIcon
-                  colorIcon={colors['primary-text']}
-                  onPress={() => navigation.goBack()}
-                  name="arrow-left"
-                  style={styles.btnIcon}
-                  sizeIcon={20}
-                />
-              );
-            }
-             
-            return null;
-          }
-        })}
+        options={({ navigation }) =>
+          registerOptionsWithGoBack({ navigation, colors })
+        }
         component={
           appInitStore.getInitApp.status
             ? OnboardingIntroScreen
@@ -104,6 +108,13 @@ export const RegisterNavigation: FC = () => {
         }}
         name={SCREENS.RegisterEnd}
         component={RegisterEndScreen}
+      />
+      <Stack.Screen
+        options={({ navigation }) =>
+          registerOptionsWithGoBack({ navigation, colors })
+        }
+        name={SCREENS.CreateANewWallet}
+        component={CreateANewWalletScreen}
       />
     </Stack.Navigator>
   );

@@ -11,6 +11,7 @@ import { useStore } from '../../stores';
 import { metrics } from '../../themes';
 import { OWalletLogo, OWalletUnion } from './owallet-logo';
 import { HeaderWelcome } from './components';
+import { SCREENS } from '@src/common/constants';
 
 export const RegisterIntroScreen: FunctionComponent = observer(() => {
   const { keyRingStore, analyticsStore } = useStore();
@@ -32,12 +33,8 @@ export const RegisterIntroScreen: FunctionComponent = observer(() => {
     });
   };
   const handleCreateANewWallet = () => {
-    analyticsStore.logEvent('Create account started', {
-      registerType: 'seed'
-    });
-    smartNavigation.navigateSmart('Register.NewMnemonic', {
-      registerConfig
-    });
+    
+    smartNavigation.navigate(SCREENS.CreateANewWallet);
   };
   const styles = useStyles();
 
