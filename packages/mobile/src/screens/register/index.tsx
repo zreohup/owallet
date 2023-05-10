@@ -10,6 +10,7 @@ import { useSmartNavigation } from '../../navigation.provider';
 import { useStore } from '../../stores';
 import { metrics } from '../../themes';
 import { OWalletLogo, OWalletUnion } from './owallet-logo';
+import { HeaderWelcome } from './components';
 
 export const RegisterIntroScreen: FunctionComponent = observer(() => {
   const { keyRingStore, analyticsStore } = useStore();
@@ -45,17 +46,7 @@ export const RegisterIntroScreen: FunctionComponent = observer(() => {
       backgroundColor={colors['plain-background']}
       style={[styles.container]}
     >
-      <View style={styles.containerHeader}>
-        <View>
-          <OWalletLogo />
-        </View>
-        <View style={styles.containerUnion}>
-          <OWalletUnion />
-        </View>
-        <OWText typo="bold" variant="h3">
-          Sign in to OWallet
-        </OWText>
-      </View>
+      <HeaderWelcome title={'Welcome to OWallet'} />
       <OWButton
         style={styles.btnOW}
         label="Create a new wallet"
@@ -83,7 +74,7 @@ const useStyles = () => {
     btnOW: {
       marginBottom: 16
     },
-    containerUnion: { paddingTop: 20, paddingBottom: 16 },
+
     title: {
       fontWeight: '700',
       fontSize: 24,
@@ -91,10 +82,7 @@ const useStyles = () => {
       lineHeight: 34,
       paddingBottom: 8
     },
-    containerHeader: {
-      alignItems: 'center',
-      padding: 18
-    },
+
     containerBtn: {
       width: metrics.screenWidth - 86
     },
@@ -106,8 +94,7 @@ const useStyles = () => {
     },
     container: {
       paddingLeft: 42,
-      paddingRight: 42,
-      paddingTop: metrics.screenHeight * 0.11
+      paddingRight: 42
     }
   });
 };
