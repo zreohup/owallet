@@ -19,6 +19,7 @@ import { RegisterEndScreen } from '@src/screens/register/end';
 
 import OWButtonIcon from '@src/components/button/ow-button-icon';
 import CreateANewWalletScreen from '@src/screens/register/create-a-new-wallet-screen';
+import delay from 'delay';
 const Stack = createStackNavigator();
 const registerOptionsWithGoBack = ({ navigation, colors }): any => ({
   headerShown: true,
@@ -68,9 +69,12 @@ export const RegisterNavigation: FC = () => {
     >
       <Stack.Screen
         name={SCREENS.RegisterIntro}
-        options={({ navigation }) =>
-          registerOptionsWithGoBack({ navigation, colors })
-        }
+        options={({ navigation }) => {
+          if (!appInitStore.getInitApp.status) {
+            return registerOptionsWithGoBack({ navigation, colors });
+          }
+          return null;
+        }}
         component={
           appInitStore.getInitApp.status
             ? OnboardingIntroScreen

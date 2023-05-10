@@ -527,6 +527,8 @@ PODS:
     - Sentry/Core (= 7.31.5)
   - Sentry/Core (7.31.5)
   - SSZipArchive (2.2.3)
+  - thresholdkey-react-native-storage (2.0.0):
+    - React-Core
   - UMAppLoader (2.2.0)
   - UMCore (7.1.2)
   - UMReactNativeAdapter (6.3.9):
@@ -610,6 +612,7 @@ DEPENDENCIES:
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - Sentry (from `https://github.com/getsentry/sentry-cocoa.git`, tag `7.31.5`)
+  - "thresholdkey-react-native-storage (from `../node_modules/@thresholdkey/react-native-storage`)"
   - UMAppLoader (from `../node_modules/unimodules-app-loader/ios`)
   - "UMCore (from `../node_modules/@unimodules/core/ios`)"
   - "UMReactNativeAdapter (from `../node_modules/@unimodules/react-native-adapter/ios`)"
@@ -779,6 +782,8 @@ EXTERNAL SOURCES:
   Sentry:
     :git: https://github.com/getsentry/sentry-cocoa.git
     :tag: 7.31.5
+  thresholdkey-react-native-storage:
+    :path: "../node_modules/@thresholdkey/react-native-storage"
   UMAppLoader:
     :path: "../node_modules/unimodules-app-loader/ios"
   UMCore:
@@ -887,6 +892,7 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
   Sentry: 4c9babff9034785067c896fd580b1f7de44da020
   SSZipArchive: 62d4947b08730e4cda640473b0066d209ff033c9
+  thresholdkey-react-native-storage: 9ab6b2fe92109f2609c37d5b5622ea1b04d51f70
   UMAppLoader: 21af63390e55c82e037fb9752d93114a80ecf16e
   UMCore: ce3a4faa010239063b8343895b29a6d97b01069d
   UMReactNativeAdapter: d03cefd0e4e4179ab8c490408589f1c8a6c8b785

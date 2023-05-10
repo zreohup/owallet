@@ -84,6 +84,7 @@ export const PageWithScrollView = forwardRef<
             style
           ])}
           keyboardOpeningTime={0}
+          showsVerticalScrollIndicator={false}
           onScroll={Animated.event(
             [
               {
