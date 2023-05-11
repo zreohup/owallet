@@ -109,18 +109,12 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   const [statusSecurityPass, setStatusSecurityPass] = useState(false);
   const [statusRecoveryPass, setStatusRecoveryPass] = useState(false);
   const [isSocialLogin, setIsSocialLogin] = useState(false);
-  console.log('isSocialLogin: ', isSocialLogin);
+
   const reconstructKey = async () => {
     const { requiredShares } = tKey.getKeyDetails();
 
     if (requiredShares <= 0) {
       const reconstructedKey = await tKey.reconstructKey();
-      // setPrivateKey(reconstructedKey?.privKey.toString('hex'));
-      // loadingScreen.setIsLoading(false);
-      console.log(
-        '🚀 ~ file: index.tsx:161 ~ initialize ~ reconstructedKey.privKey:',
-        reconstructedKey?.privKey.toString('hex')
-      );
       return reconstructedKey?.privKey?.toString('hex');
     }
   };
@@ -138,8 +132,6 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   };
   const submit = handleSubmit(async () => {
     setIsCreating(true);
-    console.log('isSocialLogin: ', isSocialLogin);
-
     if (recoveryVisible) {
       const privKey = await recoverShare();
       if (privKey) {
