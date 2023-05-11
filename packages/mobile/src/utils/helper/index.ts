@@ -6,6 +6,9 @@ import { getNetworkTypeByChainId } from '@owallet/common';
 import { AppCurrency } from '@owallet/types';
 import get from 'lodash/get';
 import { TxsHelper } from '@src/stores/txs/helpers/txs-helper';
+import ThresholdKey from '@thresholdkey/default';
+import SecurityQuestionsModule from '@thresholdkey/security-questions';
+import ReactNativeStorage from '@thresholdkey/react-native-storage';
 const SCHEME_IOS = 'owallet://open_url?url=';
 const SCHEME_ANDROID = 'app.owallet.oauth://google/open_url?url=';
 export const TRON_ID = '0x2b6653dc';
@@ -544,4 +547,15 @@ export function createTxsHelper() {
   return new TxsHelper();
 }
 
+export const tKey = new ThresholdKey({
+  modules: {
+    reactNativeStorage: new ReactNativeStorage(),
+    securityQuestions: new SecurityQuestionsModule()
+  },
+  manualSync: false,
+  customAuthArgs: {
+    baseUrl: 'http://localhost/serviceworker',
+    network: 'testnet'
+  } as any
+});
 export { get };

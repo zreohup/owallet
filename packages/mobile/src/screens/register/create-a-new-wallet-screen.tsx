@@ -11,32 +11,18 @@ import { useStore } from '@src/stores';
 import { useRegisterConfig } from '@owallet/hooks';
 import { useSmartNavigation } from '@src/navigation.provider';
 import { SCREENS } from '@src/common/constants';
-import ThresholdKey from '@thresholdkey/default';
-import SecurityQuestionsModule from '@thresholdkey/security-questions';
-import ReactNativeStorage from '@thresholdkey/react-native-storage';
 import * as WebBrowser from 'expo-web-browser';
 import WebView from 'react-native-webview';
 import BN from 'bn.js';
-import { Dialog } from '@rneui/themed';
-import { TextInput } from '@src/components/input';
+import { useLoadingScreen } from '@src/providers/loading-screen';
+import { navigate } from '@src/router/root';
+import { tKey } from '@src/utils/helper';
 type GenericObject = {
   [key: string]: string;
 };
 
 const CLIENT_ID =
   '349137538811-8t7s7584app6am5j09a2kglo8dg39eqn.apps.googleusercontent.com';
-
-const tKey = new ThresholdKey({
-  modules: {
-    reactNativeStorage: new ReactNativeStorage(),
-    securityQuestions: new SecurityQuestionsModule()
-  },
-  manualSync: false,
-  customAuthArgs: {
-    baseUrl: 'http://localhost/serviceworker',
-    network: 'testnet'
-  } as any
-});
 
 const isAndroid = Platform.OS === 'android';
 const html = require('@src/assets/interpolate.html');
@@ -45,15 +31,11 @@ const CreateANewWalletScreen = () => {
   const smartNavigation = useSmartNavigation();
   const { keyRingStore, analyticsStore } = useStore();
   const [loginResponse, setLoginResponse] = useState<any>();
-  const [privateKey, setPrivateKey] = useState<string>();
   const [interpolateResult, setInterpolateResult] = useState<{
     pubKey: string;
     privKey: string;
   }>();
-  const [recoveryPassword, setRecoveryPassword] = useState<string>();
-  const [recoveryVisible, setRecoveryVisible] = useState(false);
-  const [securityPassword, setSecurityPassword] = useState<string>(); // need confirm password
-  const [securityPasswordVisible, setSecurityPasswordVisible] = useState(false);
+  const loadingScreen = useLoadingScreen();
   const registerConfig = useRegisterConfig(keyRingStore, []);
   const handleCreateANewMnemonic = () => {
     analyticsStore.logEvent('Create account started', {
@@ -129,9 +111,10 @@ const CreateANewWalletScreen = () => {
       for (const key of redirectedUrl.searchParams.keys()) {
         queryParams[key] = redirectedUrl.searchParams.get(key);
       }
-
+      loadingScreen.openAsync();
       triggerLoginMobile(hash, queryParams);
     } catch (e) {
+      loadingScreen.setIsLoading(false);
       console.log('🚀 ~ file: index.tsx:99 ~ test ~ e:', e);
     }
   };
@@ -154,9 +137,11 @@ const CreateANewWalletScreen = () => {
         hash,
         queryParameters
       });
+      console.log('userInfo: ', userInfo);
 
       setLoginResponse({ shares, sharesIndexes, userInfo, thresholdPublicKey });
     } catch (error) {
+      loadingScreen.setIsLoading(false);
       console.log(
         '🚀 ~ file: index.tsx:134 ~ triggerLoginMobile ~ error:',
         error
@@ -181,10 +166,17 @@ const CreateANewWalletScreen = () => {
         ).inputShareFromReactNativeStorage();
       } catch (error) {
         console.log('🚀 ~ file: index.tsx:154 ~ initialize ~ error:', error);
-        return setRecoveryVisible(true);
+        loadingScreen.setIsLoading(false);
+        navigate(SCREENS.RegisterRecoverMnemonic, {
+          registerConfig,
+          recoveryVisible: true,
+          userInfo: loginResponse['userInfo']
+        });
+        // return setRecoveryVisible(true);
       }
       await reconstructKey();
     } catch (error) {
+      loadingScreen.setIsLoading(false);
       console.log('🚀 ~ file: index.tsx:157 ~ initialize ~ error:', error);
     }
   };
@@ -194,7 +186,11 @@ const CreateANewWalletScreen = () => {
 
     if (requiredShares <= 0) {
       const reconstructedKey = await tKey.reconstructKey();
-      setPrivateKey(reconstructedKey?.privKey.toString('hex'));
+      loadingScreen.setIsLoading(false);
+      navigate(SCREENS.RegisterRecoverMnemonic, {
+        registerConfig,
+        userInfo: loginResponse['userInfo']
+      });
       console.log(
         '🚀 ~ file: index.tsx:161 ~ initialize ~ reconstructedKey.privKey:',
         reconstructedKey?.privKey.toString('hex')
@@ -215,56 +211,17 @@ const CreateANewWalletScreen = () => {
         '🚀 ~ file: index.tsx:181 ~ reconstructKey ~ isExistSecurityQuestions:',
         isExistSecurityQuestions
       );
-      if (!isExistSecurityQuestions) setSecurityPasswordVisible(true);
-    }
-  };
-
-  const recoverShare = async () => {
-    try {
-      await (
-        tKey.modules.securityQuestions as any
-      ).inputShareFromSecurityQuestions(recoveryPassword); // 2/2 flow
-      
-      const { requiredShares } = tKey.getKeyDetails();
-      if (requiredShares <= 0) {
-        const reconstructedKey = await tKey.reconstructKey();
-        setPrivateKey(reconstructedKey?.privKey.toString('hex'));
-        console.log(
-          '🚀 ~ file: index.tsx:191 ~ recoverShare ~ reconstructedKey?.privKey:',
-          reconstructedKey?.privKey.toString('hex')
-        );
+      if (!isExistSecurityQuestions) {
+        loadingScreen.setIsLoading(false);
+        navigate(SCREENS.RegisterRecoverMnemonic, {
+          registerConfig,
+          securityPasswordVisible: true,
+          userInfo: loginResponse['userInfo']
+        });
       }
-      const shareStore = await tKey.generateNewShare();
-      await (tKey.modules.reactNativeStorage as any).storeDeviceShare(
-        shareStore.newShareStores[shareStore.newShareIndex.toString('hex')]
-      );
-      setRecoveryVisible(false);
-    } catch (error) {
-      console.log('🚀 ~ file: index.tsx:193 ~ recoverShare ~ error:', error);
     }
   };
 
-  const generateNewShareWithPassword = async () => {
-    if (!tKey) {
-      return;
-    }
-
-    try {
-      await (
-        tKey.modules.securityQuestions as any
-      ).generateNewShareWithSecurityQuestions(
-        securityPassword,
-        'whats your password?'
-      );
-      console.log('generate successfully');
-      setSecurityPasswordVisible(false);
-    } catch (error) {
-      console.log(
-        '🚀 ~ file: index.tsx:216 ~ generateNewShareWithPassword ~ error:',
-        error
-      );
-    }
-  };
   return (
     <PageWithScrollView
       style={{
@@ -312,6 +269,7 @@ const CreateANewWalletScreen = () => {
               );
               const { result, error } = JSON.parse(event.nativeEvent.data);
               if (error) {
+                loadingScreen.setIsLoading(false);
                 return console.log('🚀 ~ file: index.tsx:131 ~ error:', error);
               }
               setInterpolateResult(result);
@@ -319,43 +277,6 @@ const CreateANewWalletScreen = () => {
           />
         </View>
       )}
-      {privateKey && <Text>Private key: {privateKey}</Text>}
-      <Dialog
-        isVisible={recoveryVisible}
-        onBackdropPress={() => setRecoveryVisible(false)}
-      >
-        <Text>
-          Your account is existed. Please input your security password
-        </Text>
-        <TextInput
-          style={{
-            height: 40,
-            margin: 12,
-            borderWidth: 1,
-            padding: 10
-          }}
-          value={recoveryPassword}
-          onChangeText={setRecoveryPassword}
-        />
-        <OWButton label="Ok" onPress={recoverShare} />
-      </Dialog>
-      <Dialog
-        isVisible={securityPasswordVisible}
-        onBackdropPress={() => setSecurityPasswordVisible(false)}
-      >
-        <Text>Please input your security password</Text>
-        <TextInput
-          style={{
-            height: 40,
-            margin: 12,
-            borderWidth: 1,
-            padding: 10
-          }}
-          value={recoveryPassword}
-          onChangeText={setSecurityPassword}
-        />
-        <OWButton label="Ok" onPress={generateNewShareWithPassword} />
-      </Dialog>
     </PageWithScrollView>
   );
 };

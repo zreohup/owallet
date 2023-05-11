@@ -26,6 +26,7 @@ import OWButton from '../../../components/button/OWButton';
 import OWIcon from '../../../components/ow-icon/ow-icon';
 import { spacing } from '../../../themes';
 import OWButtonIcon from '@src/components/button/ow-button-icon';
+import { SCREENS } from '@src/common/constants';
 
 interface FormData {
   name: string;
@@ -85,10 +86,10 @@ export const NewMnemonicScreen: FunctionComponent = observer(props => {
     }
   });
   const onGoBack = () => {
-    if (checkRouter(props?.route?.name, 'RegisterMain')) {
+    if (checkRouter(props?.route?.name, SCREENS.RegisterNewMnemonic)) {
       smartNavigation.goBack();
     } else {
-      smartNavigation.navigateSmart('Register.Intro', {});
+      smartNavigation.navigate('Register.Intro', {});
     }
   };
   const onSubmitEditingUserName = () => {

@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import { PageWithScrollView } from '../../../components/page';
 import { observer } from 'mobx-react-lite';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -31,6 +31,7 @@ import { LoadingSpinner } from '../../../components/spinner';
 import OWButton from '../../../components/button/OWButton';
 import OWIcon from '../../../components/ow-icon/ow-icon';
 import { SCREENS } from '@src/common/constants';
+import { tKey } from '@src/utils/helper';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const bip39 = require('bip39');
 
@@ -64,6 +65,8 @@ interface FormData {
   name: string;
   password: string;
   confirmPassword: string;
+  securityPassword: string;
+  recoveryPassword: string;
 }
 
 export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
@@ -73,20 +76,22 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
         string,
         {
           registerConfig: RegisterConfig;
+          recoveryVisible?: boolean;
+          securityPasswordVisible?: boolean;
+          userInfo?: any;
         }
       >,
       string
     >
   >();
-
   const { analyticsStore } = useStore();
-
   const smartNavigation = useSmartNavigation();
-
   const registerConfig: RegisterConfig = route.params.registerConfig;
   const bip44Option = useBIP44Option();
   const [mode] = useState(registerConfig.mode);
-
+  const recoveryVisible = route.params?.recoveryVisible;
+  const securityPasswordVisible = route.params?.securityPasswordVisible;
+  const userInfo = route.params?.userInfo;
   const {
     control,
     handleSubmit,
@@ -101,33 +106,96 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   const [isCreating, setIsCreating] = useState(false);
   const [statusPass, setStatusPass] = useState(false);
   const [statusConfirmPass, setStatusConfirmPass] = useState(false);
+  const [statusSecurityPass, setStatusSecurityPass] = useState(false);
+  const [statusRecoveryPass, setStatusRecoveryPass] = useState(false);
+  const [isSocialLogin, setIsSocialLogin] = useState(false);
+  console.log('isSocialLogin: ', isSocialLogin);
+  const reconstructKey = async () => {
+    const { requiredShares } = tKey.getKeyDetails();
+
+    if (requiredShares <= 0) {
+      const reconstructedKey = await tKey.reconstructKey();
+      // setPrivateKey(reconstructedKey?.privKey.toString('hex'));
+      // loadingScreen.setIsLoading(false);
+      console.log(
+        '🚀 ~ file: index.tsx:161 ~ initialize ~ reconstructedKey.privKey:',
+        reconstructedKey?.privKey.toString('hex')
+      );
+      return reconstructedKey?.privKey?.toString('hex');
+    }
+  };
+  useEffect(() => {
+    if (userInfo?.email) {
+      setValue('name', userInfo?.email, { shouldValidate: true });
+      handleInit();
+    }
+  }, []);
+  const handleInit = async () => {
+    const privateKey = await reconstructKey();
+    if (privateKey) {
+      setIsSocialLogin(true);
+    }
+  };
   const submit = handleSubmit(async () => {
     setIsCreating(true);
+    console.log('isSocialLogin: ', isSocialLogin);
 
-    const mnemonic = trimWordsStr(getValues('mnemonic'));
-    if (!isPrivateKey(mnemonic)) {
-      await registerConfig.createMnemonic(
-        getValues('name'),
-        mnemonic,
-        getValues('password'),
-        bip44Option.bip44HDPath
-      );
-      analyticsStore.setUserProperties({
-        registerType: 'seed',
-        accountType: 'mnemonic'
-      });
-    } else {
-      const privateKey = Buffer.from(mnemonic.trim().replace('0x', ''), 'hex');
+    if (recoveryVisible) {
+      const privKey = await recoverShare();
+      if (privKey) {
+        const privateKey = Buffer.from(privKey.trim().replace('0x', ''), 'hex');
+        await registerConfig.createPrivateKey(
+          getValues('name'),
+          privateKey,
+          getValues('password')
+        );
+      }
+    } else if (securityPasswordVisible) {
+      const privKey = await generateNewShareWithPassword();
+      const privateKey = Buffer.from(privKey.trim().replace('0x', ''), 'hex');
       await registerConfig.createPrivateKey(
         getValues('name'),
         privateKey,
         getValues('password')
       );
-      analyticsStore.setUserProperties({
-        registerType: 'seed',
-        accountType: 'privateKey'
-      });
+    } else if (isSocialLogin) {
+      const privKey = await reconstructKey();
+      const privateKey = Buffer.from(privKey.trim().replace('0x', ''), 'hex');
+      await registerConfig.createPrivateKey(
+        getValues('name'),
+        privateKey,
+        getValues('password')
+      );
+    } else {
+      const mnemonic = trimWordsStr(getValues('mnemonic'));
+      if (!isPrivateKey(mnemonic)) {
+        await registerConfig.createMnemonic(
+          getValues('name'),
+          mnemonic,
+          getValues('password'),
+          bip44Option.bip44HDPath
+        );
+        analyticsStore.setUserProperties({
+          registerType: 'seed',
+          accountType: 'mnemonic'
+        });
+      } else {
+        const privateKey = Buffer.from(
+          mnemonic.trim().replace('0x', ''),
+          'hex'
+        );
+        await registerConfig.createPrivateKey(
+          getValues('name'),
+          privateKey,
+          getValues('password')
+        );
+        analyticsStore.setUserProperties({
+          registerType: 'seed',
+          accountType: 'privateKey'
+        });
+      }
     }
+
     if (checkRouter(props?.route?.name, 'RegisterRecoverMnemonicMain')) {
       navigate(SCREENS.RegisterEnd, {
         password: getValues('password'),
@@ -148,6 +216,26 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
       });
     }
   });
+  const generateNewShareWithPassword = async () => {
+    if (!tKey) {
+      return;
+    }
+    try {
+      await (
+        tKey.modules.securityQuestions as any
+      ).generateNewShareWithSecurityQuestions(
+        getValues('securityPassword'),
+        'whats your password?'
+      );
+      console.log('generate successfully');
+      return await reconstructKey();
+    } catch (error) {
+      console.log(
+        '🚀 ~ file: index.tsx:216 ~ generateNewShareWithPassword ~ error:',
+        error
+      );
+    }
+  };
   const onPaste = async () => {
     const text = await Clipboard.getStringAsync();
     if (text) {
@@ -237,14 +325,20 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
     return (
       <TextInput
         label="Username"
-        returnKeyType={mode === 'add' ? 'done' : 'next'}
+        returnKeyType={
+          mode === 'add' && !securityPasswordVisible && !recoveryVisible
+            ? 'done'
+            : 'next'
+        }
         onSubmitEditing={() => {
-          if (mode === 'add') {
-            submit();
-          }
-          if (mode === 'create') {
+          if (securityPasswordVisible) {
+            setFocus('securityPassword');
+          } else if (recoveryVisible) {
+            setFocus('recoveryPassword');
+          } else if (mode === 'create') {
             setFocus('password');
           }
+          submit();
         }}
         inputStyle={{
           ...styles.borderInput
@@ -262,15 +356,20 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
       return 'Password must be longer than 8 characters';
     }
   };
+  const validateSecurityPass = (value: string) => {
+    if (value.length < 8) {
+      return 'Security password must be longer than 8 characters';
+    }
+  };
   const renderPass = ({ field: { onChange, onBlur, value, ref } }) => {
     return (
       <TextInput
         label="New password"
         returnKeyType="next"
-        secureTextEntry={true}
         onSubmitEditing={() => {
           setFocus('confirmPassword');
         }}
+        secureTextEntry={true}
         inputStyle={{
           ...styles.borderInput
         }}
@@ -306,6 +405,38 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
       return "Password doesn't match";
     }
   };
+  const validateRecoveryPass = (value: string) => {
+    if (value.length < 8) {
+      return 'Password must be longer than 8 characters';
+    }
+  };
+  const recoverShare = async () => {
+    try {
+      await (
+        tKey.modules.securityQuestions as any
+      ).inputShareFromSecurityQuestions(getValues('recoveryPassword')); // 2/2 flow
+
+      const { requiredShares } = tKey.getKeyDetails();
+      if (requiredShares <= 0) {
+        console.log('requiredShares: ', requiredShares);
+        const reconstructedKey = await tKey.reconstructKey();
+        // loadingScreen.setIsLoading(false);
+        return reconstructedKey?.privKey.toString('hex');
+      }
+      const shareStore = await tKey.generateNewShare();
+      await (tKey.modules.reactNativeStorage as any).storeDeviceShare(
+        shareStore.newShareStores[shareStore.newShareIndex.toString('hex')]
+      );
+      console.log('shareStore: ', shareStore);
+
+      return null;
+      // setRecoveryVisible(false);
+    } catch (error) {
+      // loadingScreen.setIsLoading(false);
+      console.log('🚀 ~ file: index.tsx:193 ~ recoverShare ~ error:', error);
+    }
+  };
+
   const renderConfirmPass = ({ field: { onChange, onBlur, value, ref } }) => {
     return (
       <TextInput
@@ -340,37 +471,141 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
       />
     );
   };
+  const renderSecurityPassword = ({
+    field: { onChange, onBlur, value, ref }
+  }) => {
+    return (
+      <TextInput
+        label="Security password"
+        returnKeyType={mode == 'create' ? 'next' : 'done'}
+        onSubmitEditing={() => {
+          if (mode === 'create') setFocus('password');
+          submit();
+        }}
+        inputRight={
+          <OWButton
+            style={styles.padIcon}
+            type="link"
+            onPress={() => setStatusSecurityPass(!statusSecurityPass)}
+            icon={
+              <OWIcon
+                name={!statusConfirmPass ? 'eye' : 'eye-slash'}
+                color={colors['icon-purple-700-gray']}
+                size={22}
+              />
+            }
+          />
+        }
+        secureTextEntry={!statusSecurityPass}
+        inputStyle={{
+          ...styles.borderInput
+        }}
+        error={errors.securityPassword?.message}
+        onBlur={onBlur}
+        onChangeText={onChange}
+        value={value}
+        ref={ref}
+      />
+    );
+  };
+  const renderRecoveryPassword = ({
+    field: { onChange, onBlur, value, ref }
+  }) => {
+    return (
+      <TextInput
+        label="Recovery Password"
+        returnKeyType={mode === 'create' ? 'next' : 'done'}
+        onSubmitEditing={() => {
+          if (mode === 'create') setFocus('password');
+          submit();
+        }}
+        inputRight={
+          <OWButton
+            style={styles.padIcon}
+            type="link"
+            onPress={() => setStatusRecoveryPass(!statusRecoveryPass)}
+            icon={
+              <OWIcon
+                name={!statusRecoveryPass ? 'eye' : 'eye-slash'}
+                color={colors['icon-purple-700-gray']}
+                size={22}
+              />
+            }
+          />
+        }
+        secureTextEntry={!statusRecoveryPass}
+        inputStyle={{
+          ...styles.borderInput
+        }}
+        error={errors.recoveryPassword?.message}
+        onBlur={onBlur}
+        onChangeText={onChange}
+        value={value}
+        ref={ref}
+      />
+    );
+  };
   return (
     <PageWithScrollView
       contentContainerStyle={styles.container}
       backgroundColor={colors['plain-background']}
     >
       <View style={styles.headerView}>
-        <Text style={styles.titleHeader}>Import wallet</Text>
+        <Text style={styles.titleHeader}>
+          {securityPasswordVisible || recoveryVisible || isSocialLogin
+            ? 'Sign in with Google'
+            : 'Import wallet'}
+        </Text>
         <View>
           <OWalletLogo size={72} />
         </View>
       </View>
+      {!recoveryVisible && !securityPasswordVisible && !isSocialLogin && (
+        <Controller
+          control={control}
+          rules={{
+            required: 'Mnemonic is required',
+            validate: validateMnemonic
+          }}
+          render={renderMnemonic}
+          name="mnemonic"
+          defaultValue=""
+        />
+      )}
       <Controller
         control={control}
         rules={{
-          required: 'Mnemonic is required',
-          validate: validateMnemonic
-        }}
-        render={renderMnemonic}
-        name="mnemonic"
-        defaultValue=""
-      />
-      <Controller
-        control={control}
-        rules={{
-          required: 'Name is required'
+          required: 'Name is required',
+          validate: validatePass
         }}
         render={renderName}
         name="name"
         defaultValue=""
       />
-
+      {recoveryVisible && (
+        <Controller
+          control={control}
+          rules={{
+            required: 'Recovery password is required',
+            validate: validateRecoveryPass
+          }}
+          render={renderRecoveryPassword}
+          name="recoveryPassword"
+          defaultValue=""
+        />
+      )}
+      {securityPasswordVisible && (
+        <Controller
+          control={control}
+          rules={{
+            required: 'Security password is required',
+            validate: validateSecurityPass
+          }}
+          render={renderSecurityPassword}
+          name="securityPassword"
+          defaultValue=""
+        />
+      )}
       {mode === 'create' ? (
         <React.Fragment>
           <Controller
