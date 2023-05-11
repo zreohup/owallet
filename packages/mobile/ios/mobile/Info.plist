@@ -36,6 +36,7 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+  
 	<key>CodePushDeploymentKey</key>
 	<string>5wwKyCxC0jsz58bFqLvrd5ChWJq4SlenBKp0P</string>
 	<key>LSApplicationQueriesSchemes</key>
@@ -65,6 +66,10 @@
 	<string>App uses camera to scan address</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>App uses Face ID to unlock wallet</string>
+  <key>LSApplicationQueriesSchemes</key>
+  <array>
+      <string>URL</string>
+  </array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>DMSans-Bold.ttf</string>
