@@ -16,7 +16,7 @@ import WebView from 'react-native-webview';
 import BN from 'bn.js';
 import { useLoadingScreen } from '@src/providers/loading-screen';
 import { navigate } from '@src/router/root';
-import { tKey } from '@src/utils/helper';
+import { initBigInt } from '@src/utils/helper';
 type GenericObject = {
   [key: string]: string;
 };
@@ -35,6 +35,7 @@ const CreateANewWalletScreen = () => {
     pubKey: string;
     privKey: string;
   }>();
+  const [tKey, setTKey] = useState(null);
   const loadingScreen = useLoadingScreen();
   const registerConfig = useRegisterConfig(keyRingStore, []);
   const handleCreateANewMnemonic = () => {
@@ -45,20 +46,52 @@ const CreateANewWalletScreen = () => {
       registerConfig
     });
   };
+  const init = async () => {
+    try {
+      await initBigInt();
+      let { default: ThresholdKey } = await import('@thresholdkey/default');
+      let { default: SecurityQuestionsModule } = await import(
+        '@thresholdkey/security-questions'
+      );
+      let { default: ReactNativeStorage } = await import(
+        '@thresholdkey/react-native-storage'
+      );
+      const tKeyProvider = new ThresholdKey({
+        modules: {
+          reactNativeStorage: new ReactNativeStorage(),
+          securityQuestions: new SecurityQuestionsModule()
+        },
+        manualSync: false,
+        customAuthArgs: {
+          baseUrl: 'http://localhost/serviceworker',
+          network: 'testnet'
+        } as any
+      });
+      setTKey(tKeyProvider);
+    } catch (error) {
+      console.log('error: ', error);
+    }
+  };
   useEffect(() => {
-    const init = async () => {
-      // Initialization of Service Provider
-      try {
-        await (tKey.serviceProvider as any).init({
-          skipSw: true,
-          skipPrefetch: true
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    };
     init();
+    return () => {};
   }, []);
+  const initServiceProvider = async () => {
+    // Initialization of Service Provider
+    try {
+      await (tKey.serviceProvider as any).init({
+        skipSw: true,
+        skipPrefetch: true
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  useEffect(() => {
+    if (tKey) {
+      initServiceProvider();
+    }
+  }, [tKey]);
 
   useEffect(() => {
     if (interpolateResult) {
@@ -170,7 +203,8 @@ const CreateANewWalletScreen = () => {
         navigate(SCREENS.RegisterRecoverMnemonic, {
           registerConfig,
           recoveryVisible: true,
-          userInfo: loginResponse['userInfo']
+          userInfo: loginResponse['userInfo'],
+          tKey
         });
         // return setRecoveryVisible(true);
       }
@@ -189,7 +223,8 @@ const CreateANewWalletScreen = () => {
       loadingScreen.setIsLoading(false);
       navigate(SCREENS.RegisterRecoverMnemonic, {
         registerConfig,
-        userInfo: loginResponse['userInfo']
+        userInfo: loginResponse['userInfo'],
+        tKey
       });
       console.log(
         '🚀 ~ file: index.tsx:161 ~ initialize ~ reconstructedKey.privKey:',
@@ -216,7 +251,8 @@ const CreateANewWalletScreen = () => {
         navigate(SCREENS.RegisterRecoverMnemonic, {
           registerConfig,
           securityPasswordVisible: true,
-          userInfo: loginResponse['userInfo']
+          userInfo: loginResponse['userInfo'],
+          tKey
         });
       }
     }
@@ -237,6 +273,7 @@ const CreateANewWalletScreen = () => {
       <OrText />
       <OWButton
         onPress={login}
+        disabled={!!tKey ? false : true}
         type="secondary"
         icon={<OWIcon type="images" source={images.google} size={24} />}
         label="Sign in with Google"

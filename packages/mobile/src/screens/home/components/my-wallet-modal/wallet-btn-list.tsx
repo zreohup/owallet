@@ -13,6 +13,7 @@ import { spacing, typography } from '../../../../themes';
 import { navigate } from '../../../../router/root';
 import { useTheme } from '@src/themes/theme-provider';
 import { useStyleMyWallet } from './styles';
+import { SCREENS } from '@src/common/constants';
 
 const objTypeWallet = {
   CREATE_WALLET: 'create',
@@ -50,7 +51,7 @@ const WalletBtnList = () => {
         analyticsStore.logEvent('Create account started', {
           registerType: 'seed'
         });
-        navigate('RegisterMain', { registerConfig });
+        navigate(SCREENS.STACK.Register, { screen:SCREENS.CreateANewWallet });
         break;
       case objTypeWallet.IMPORT_EXISTING_WALLET:
         analyticsStore.logEvent('Import account started', {

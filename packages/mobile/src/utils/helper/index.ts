@@ -547,15 +547,14 @@ export function createTxsHelper() {
   return new TxsHelper();
 }
 
-export const tKey = new ThresholdKey({
-  modules: {
-    reactNativeStorage: new ReactNativeStorage(),
-    securityQuestions: new SecurityQuestionsModule()
-  },
-  manualSync: false,
-  customAuthArgs: {
-    baseUrl: 'http://localhost/serviceworker',
-    network: 'testnet'
-  } as any
-});
+
+export const initBigInt = () => {
+  new Promise<boolean>((resolve, reject) => {
+    if (typeof BigInt === 'undefined') {
+      global.BigInt = require('big-integer');
+      resolve(true);
+    }
+    resolve(true);
+  });
+};
 export { get };

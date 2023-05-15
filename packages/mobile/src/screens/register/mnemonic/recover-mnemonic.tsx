@@ -31,7 +31,7 @@ import { LoadingSpinner } from '../../../components/spinner';
 import OWButton from '../../../components/button/OWButton';
 import OWIcon from '../../../components/ow-icon/ow-icon';
 import { SCREENS } from '@src/common/constants';
-import { tKey } from '@src/utils/helper';
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const bip39 = require('bip39');
 
@@ -79,6 +79,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
           recoveryVisible?: boolean;
           securityPasswordVisible?: boolean;
           userInfo?: any;
+          tKey?:any;
         }
       >,
       string
@@ -92,6 +93,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   const recoveryVisible = route.params?.recoveryVisible;
   const securityPasswordVisible = route.params?.securityPasswordVisible;
   const userInfo = route.params?.userInfo;
+  const tKey = route.params?.tKey;
   const {
     control,
     handleSubmit,

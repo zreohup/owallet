@@ -86,11 +86,7 @@ export const NewMnemonicScreen: FunctionComponent = observer(props => {
     }
   });
   const onGoBack = () => {
-    if (checkRouter(props?.route?.name, SCREENS.RegisterNewMnemonic)) {
-      smartNavigation.goBack();
-    } else {
-      smartNavigation.navigate('Register.Intro', {});
-    }
+    smartNavigation.goBack();
   };
   const onSubmitEditingUserName = () => {
     if (mode === 'add') {
