@@ -114,11 +114,17 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   const [isSocialLogin, setIsSocialLogin] = useState(false);
 
   const reconstructKey = async () => {
-    const { requiredShares } = tKey.getKeyDetails();
+    try {
+      const { requiredShares } = tKey.getKeyDetails();
 
-    if (requiredShares <= 0) {
-      const reconstructedKey = await tKey.reconstructKey();
-      return reconstructedKey?.privKey?.toString('hex');
+      if (requiredShares <= 0) {
+        const reconstructedKey = await tKey.reconstructKey();
+        return reconstructedKey?.privKey?.toString('hex');
+      }
+    } catch (error) {
+      console.log('error: ', error);
+      setIsCreating(false);
+      return Promise.reject(error);
     }
   };
   useEffect(() => {
@@ -136,63 +142,94 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
     }
   };
   const submit = handleSubmit(async () => {
-    setIsCreating(true);
-    const metaData = { email: userInfo?.email, type: 'google' };
+    try {
+      setIsCreating(true);
+      const metaData = { email: userInfo?.email, type: 'google' };
 
-    if (recoveryVisible) {
-      const privKey = await recoverShare();
-      if (privKey) {
-        const privateKey = Buffer.from(privKey.trim().replace('0x', ''), 'hex');
-        createPrivateKey(privateKey, metaData);
+      if (recoveryVisible) {
+        try {
+          const privKey = await recoverShare();
+          if (privKey) {
+            const privateKey = Buffer.from(
+              privKey.trim().replace('0x', ''),
+              'hex'
+            );
+            createPrivateKey(privateKey, metaData);
+          }
+        } catch (error) {
+          let msg = 'wrong recovery password';
+          alert(msg);
+          return Promise.reject(msg);
+        }
+      } else if (securityPasswordVisible) {
+        try {
+          const privKey = await generateNewShareWithPassword();
+          const privateKey = Buffer.from(
+            privKey.trim().replace('0x', ''),
+            'hex'
+          );
+          createPrivateKey(privateKey, metaData);
+        } catch (error) {
+          let msg = 'wrong security password';
+          alert(msg);
+          return Promise.reject(msg);
+        }
+      } else if (isSocialLogin) {
+        try {
+          const privKey = await reconstructKey();
+          const privateKey = Buffer.from(
+            privKey.trim().replace('0x', ''),
+            'hex'
+          );
+          createPrivateKey(privateKey, metaData);
+        } catch (error) {
+          let msg = 'Social login failed!';
+          return Promise.reject(msg);
+        }
+      } else {
+        const mnemonic = trimWordsStr(getValues('mnemonic'));
+        if (!isPrivateKey(mnemonic)) {
+          await registerConfig.createMnemonic(
+            getValues('name'),
+            mnemonic,
+            getValues('password'),
+            bip44Option.bip44HDPath
+          );
+          analyticsStore.setUserProperties({
+            registerType: 'seed',
+            accountType: 'mnemonic'
+          });
+        } else {
+          const privateKey = Buffer.from(
+            mnemonic.trim().replace('0x', ''),
+            'hex'
+          );
+          createPrivateKey(privateKey, null);
+        }
       }
-    } else if (securityPasswordVisible) {
-      const privKey = await generateNewShareWithPassword();
-      const privateKey = Buffer.from(privKey.trim().replace('0x', ''), 'hex');
-      createPrivateKey(privateKey, metaData);
-    } else if (isSocialLogin) {
-      const privKey = await reconstructKey();
-      const privateKey = Buffer.from(privKey.trim().replace('0x', ''), 'hex');
-      createPrivateKey(privateKey, metaData);
-    } else {
-      const mnemonic = trimWordsStr(getValues('mnemonic'));
-      if (!isPrivateKey(mnemonic)) {
-        await registerConfig.createMnemonic(
-          getValues('name'),
-          mnemonic,
-          getValues('password'),
-          bip44Option.bip44HDPath
-        );
-        analyticsStore.setUserProperties({
-          registerType: 'seed',
-          accountType: 'mnemonic'
+      if (checkRouter(props?.route?.name, 'RegisterRecoverMnemonicMain')) {
+        navigate(SCREENS.RegisterEnd, {
+          password: getValues('password'),
+          type: 'recover'
         });
       } else {
-        const privateKey = Buffer.from(
-          mnemonic.trim().replace('0x', ''),
-          'hex'
-        );
-        createPrivateKey(privateKey, null);
-      }
-    }
-
-    if (checkRouter(props?.route?.name, 'RegisterRecoverMnemonicMain')) {
-      navigate(SCREENS.RegisterEnd, {
-        password: getValues('password'),
-        type: 'recover'
-      });
-    } else {
-      smartNavigation.reset({
-        index: 0,
-        routes: [
-          {
-            name: 'Register.End',
-            params: {
-              password: getValues('password'),
-              type: 'recover'
+        smartNavigation.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'Register.End',
+              params: {
+                password: getValues('password'),
+                type: 'recover'
+              }
             }
-          }
-        ]
-      });
+          ]
+        });
+      }
+    } catch (error) {
+      console.log('error: ', error);
+      alert(JSON.stringify(error));
+      return;
     }
   });
   const createPrivateKey = async (privateKey, meta) => {
@@ -208,6 +245,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
         accountType: 'privateKey'
       });
     } catch (error) {
+      setIsCreating(false);
       console.log('error: ', error);
     }
   };
@@ -229,6 +267,8 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
         '🚀 ~ file: index.tsx:216 ~ generateNewShareWithPassword ~ error:',
         error
       );
+      setIsCreating(false);
+      return Promise.reject(error);
     }
   };
   const onPaste = async () => {
@@ -433,7 +473,10 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
       // setRecoveryVisible(false);
     } catch (error) {
       // loadingScreen.setIsLoading(false);
-      console.log('🚀 ~ file: index.tsx:193 ~ recoverShare ~ error:', error);
+
+      setIsCreating(false);
+      return Promise.reject(error);
+      // console.log('🚀 ~ file: index.tsx:193 ~ recoverShare ~ error:', error);
     }
   };
 
