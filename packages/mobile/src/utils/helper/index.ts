@@ -557,4 +557,12 @@ export const initBigInt = () => {
     resolve(true);
   });
 };
+export function removeStringAfterAtEmail(email: string): string {
+  if(!email) return '';
+  const atIndex = email.indexOf('@');
+  if (atIndex !== -1) {
+    return email.substring(0, atIndex);
+  }
+  return email;
+}
 export { get };

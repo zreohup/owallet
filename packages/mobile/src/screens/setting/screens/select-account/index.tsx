@@ -61,22 +61,30 @@ export const SettingSelectAccountScreen: FunctionComponent = observer(() => {
 
   const mnemonicKeyStores = useMemo(() => {
     return keyRingStore.multiKeyStoreInfo.filter(
-      keyStore => !keyStore.type || keyStore.type === 'mnemonic'
+      (keyStore) => !keyStore.type || keyStore.type === 'mnemonic'
     );
   }, [keyRingStore.multiKeyStoreInfo]);
 
   const ledgerKeyStores = useMemo(() => {
     return keyRingStore.multiKeyStoreInfo.filter(
-      keyStore => keyStore.type === 'ledger'
+      (keyStore) => keyStore.type === 'ledger'
     );
   }, [keyRingStore.multiKeyStoreInfo]);
 
   const privateKeyStores = useMemo(() => {
+    console.log('keyRingStore.multiKeyStoreInfo: ', keyRingStore.multiKeyStoreInfo);
+
     return keyRingStore.multiKeyStoreInfo.filter(
-      keyStore => keyStore.type === 'privateKey'
+      (keyStore) =>
+        keyStore.type === 'privateKey' && keyStore.meta?.type !== 'google'
     );
   }, [keyRingStore.multiKeyStoreInfo]);
-
+  const googleAccountStore = useMemo(() => {
+    return keyRingStore.multiKeyStoreInfo.filter(
+      (keyStore) =>
+        keyStore.type === 'privateKey' && keyStore.meta?.type === 'google'
+    );
+  }, [keyRingStore.multiKeyStoreInfo]);
   const loadingScreen = useLoadingScreen();
 
   const selectKeyStore = async (
@@ -107,9 +115,9 @@ export const SettingSelectAccountScreen: FunctionComponent = observer(() => {
                   key={i.toString()}
                   colors={colors}
                   label={keyStore.meta?.name || 'OWallet Account'}
-                  paragraph={getKeyStoreParagraph(keyStore)}
-                  topBorder={i === 0}
-                  bottomBorder={keyStores.length - 1 !== i}
+                  subLabel={getKeyStoreParagraph(keyStore)}
+                  // topBorder={i === 0}
+                  // bottomBorder={keyStores.length - 1 !== i}
                   active={keyStore.selected}
                   onPress={async () => {
                     analyticsStore.logEvent('Account changed');
@@ -129,6 +137,7 @@ export const SettingSelectAccountScreen: FunctionComponent = observer(() => {
       {renderKeyStores('mnemonic seed', mnemonicKeyStores)}
       {renderKeyStores('hardware wallet', ledgerKeyStores)}
       {renderKeyStores('private key', privateKeyStores)}
+      {renderKeyStores('google account', googleAccountStore)}
       {/* Margin bottom for last */}
       <View style={{ height: 16 }} />
     </PageWithScrollViewInBottomTabView>

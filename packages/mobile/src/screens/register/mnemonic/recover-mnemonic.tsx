@@ -31,6 +31,7 @@ import { LoadingSpinner } from '../../../components/spinner';
 import OWButton from '../../../components/button/OWButton';
 import OWIcon from '../../../components/ow-icon/ow-icon';
 import { SCREENS } from '@src/common/constants';
+import { removeStringAfterAtEmail } from '@src/utils/helper';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const bip39 = require('bip39');
@@ -79,7 +80,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
           recoveryVisible?: boolean;
           securityPasswordVisible?: boolean;
           userInfo?: any;
-          tKey?:any;
+          tKey?: any;
         }
       >,
       string
@@ -122,7 +123,9 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   };
   useEffect(() => {
     if (userInfo?.email) {
-      setValue('name', userInfo?.email, { shouldValidate: true });
+      setValue('name', removeStringAfterAtEmail(userInfo?.email), {
+        shouldValidate: true
+      });
       handleInit();
     }
   }, []);
@@ -134,32 +137,22 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   };
   const submit = handleSubmit(async () => {
     setIsCreating(true);
+    const metaData = { email: userInfo?.email, type: 'google' };
+
     if (recoveryVisible) {
       const privKey = await recoverShare();
       if (privKey) {
         const privateKey = Buffer.from(privKey.trim().replace('0x', ''), 'hex');
-        await registerConfig.createPrivateKey(
-          getValues('name'),
-          privateKey,
-          getValues('password')
-        );
+        createPrivateKey(privateKey, metaData);
       }
     } else if (securityPasswordVisible) {
       const privKey = await generateNewShareWithPassword();
       const privateKey = Buffer.from(privKey.trim().replace('0x', ''), 'hex');
-      await registerConfig.createPrivateKey(
-        getValues('name'),
-        privateKey,
-        getValues('password')
-      );
+      createPrivateKey(privateKey, metaData);
     } else if (isSocialLogin) {
       const privKey = await reconstructKey();
       const privateKey = Buffer.from(privKey.trim().replace('0x', ''), 'hex');
-      await registerConfig.createPrivateKey(
-        getValues('name'),
-        privateKey,
-        getValues('password')
-      );
+      createPrivateKey(privateKey, metaData);
     } else {
       const mnemonic = trimWordsStr(getValues('mnemonic'));
       if (!isPrivateKey(mnemonic)) {
@@ -178,15 +171,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
           mnemonic.trim().replace('0x', ''),
           'hex'
         );
-        await registerConfig.createPrivateKey(
-          getValues('name'),
-          privateKey,
-          getValues('password')
-        );
-        analyticsStore.setUserProperties({
-          registerType: 'seed',
-          accountType: 'privateKey'
-        });
+        createPrivateKey(privateKey, null);
       }
     }
 
@@ -210,6 +195,22 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
       });
     }
   });
+  const createPrivateKey = async (privateKey, meta) => {
+    try {
+      await registerConfig.createPrivateKey(
+        getValues('name'),
+        privateKey,
+        getValues('password'),
+        { ...meta }
+      );
+      analyticsStore.setUserProperties({
+        registerType: 'seed',
+        accountType: 'privateKey'
+      });
+    } catch (error) {
+      console.log('error: ', error);
+    }
+  };
   const generateNewShareWithPassword = async () => {
     if (!tKey) {
       return;
@@ -348,6 +349,11 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   const validatePass = (value: string) => {
     if (value.length < 8) {
       return 'Password must be longer than 8 characters';
+    }
+  };
+  const validateName = (value: string) => {
+    if (value.length < 6) {
+      return 'Username must be longer than 8 characters';
     }
   };
   const validateSecurityPass = (value: string) => {
@@ -570,7 +576,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
         control={control}
         rules={{
           required: 'Name is required',
-          validate: validatePass
+          validate: validateName
         }}
         render={renderName}
         name="name"

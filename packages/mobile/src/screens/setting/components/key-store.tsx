@@ -40,7 +40,9 @@ export const KeyStoreSectionTitle: FunctionComponent<{
         }}
       >
         {title &&
-          title.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())}
+          title.replace(/(^\w{1})|(\s+\w{1})/g, (letter) =>
+            letter.toUpperCase()
+          )}
       </Text>
     </View>
   );
@@ -97,7 +99,7 @@ export const renderFlag = (
     case 'inr':
       return <INRIcon height={heightFlag} />;
     default:
-      return <></>;
+      return null;
   }
 };
 
@@ -105,10 +107,19 @@ export const KeyStoreItem: FunctionComponent<{
   containerStyle?: ViewStyle;
   labelStyle?: TextStyle;
   label: string;
+  subLabel?: string;
   active?: boolean;
   colors: any;
   onPress?: () => void;
-}> = ({ containerStyle, labelStyle, label, onPress, active, colors }) => {
+}> = ({
+  containerStyle,
+  labelStyle,
+  label,
+  onPress,
+  active,
+  colors,
+  subLabel = null
+}) => {
   const styles = styling(colors);
   const renderChildren = () => {
     return (
@@ -119,25 +130,45 @@ export const KeyStoreItem: FunctionComponent<{
           justifyContent: 'space-between'
         }}
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            flex: 1
-          }}
-        >
-          {renderFlag(label)}
-          <Text
+        <View>
+          <View
             style={{
-              ...typography.h5,
-              color: colors['sub-primary-text'],
-              fontWeight: '700',
-              marginLeft: spacing['12'],
-              ...labelStyle
+              flexDirection: 'row',
+              alignItems: 'center',
+              flex: 1
             }}
           >
-            {label}
-          </Text>
+            {renderFlag(label) && (
+              <View
+                style={{
+                  paddingRight: 10
+                }}
+              >
+                {renderFlag(label)}
+              </View>
+            )}
+            <Text
+              variant="body1"
+              typo="bold"
+              style={{
+                ...labelStyle
+              }}
+            >
+              {label}
+            </Text>
+          </View>
+          {subLabel ? (
+            <Text
+              variant="caption"
+              typo="bold"
+              style={{
+                paddingTop: 5
+              }}
+              color={colors['text-place-holder']}
+            >
+              {subLabel}
+            </Text>
+          ) : null}
         </View>
 
         <View
@@ -187,7 +218,7 @@ export const KeyStoreItem: FunctionComponent<{
   );
 };
 
-const styling = colors =>
+const styling = (colors) =>
   StyleSheet.create({
     selectBtn: {
       height: 54,
