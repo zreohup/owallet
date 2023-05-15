@@ -38,6 +38,8 @@ import OWButtonIcon from '@src/components/button/ow-button-icon';
 import { Text } from '@src/components/text';
 import OWIcon from '@src/components/ow-icon/ow-icon';
 import images from '@src/assets/images';
+import { showToast } from '@src/utils/helper';
+import { Toast } from 'react-native-toast-message/lib/src/Toast';
 let splashScreenHided = false;
 async function hideSplashScreen() {
   if (!splashScreenHided) {
@@ -292,6 +294,11 @@ export const UnlockScreen: FunctionComponent = observer(() => {
         // console.log('message', data.message);
       });
     const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+      showToast({
+        text1: remoteMessage?.notification?.title,
+        text2: remoteMessage?.notification?.body,
+        onPress: () => Toast.hide()
+      });
       // const formatData = JSON.parse(remoteMessage?.data?.data);
       // console.log('raw', remoteMessage?.data);
       // console.log('formattedData', formatData);
