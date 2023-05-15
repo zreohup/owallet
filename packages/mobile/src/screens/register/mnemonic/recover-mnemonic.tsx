@@ -11,7 +11,6 @@ import {
   Image,
   Platform,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View
 } from 'react-native';
@@ -31,7 +30,8 @@ import { LoadingSpinner } from '../../../components/spinner';
 import OWButton from '../../../components/button/OWButton';
 import OWIcon from '../../../components/ow-icon/ow-icon';
 import { SCREENS } from '@src/common/constants';
-import { removeStringAfterAtEmail } from '@src/utils/helper';
+import { removeStringAfterAtEmail, showToast } from '@src/utils/helper';
+import { Text } from '@src/components/text';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const bip39 = require('bip39');
@@ -157,8 +157,9 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
             createPrivateKey(privateKey, metaData);
           }
         } catch (error) {
-          let msg = 'wrong recovery password';
-          alert(msg);
+          let msg =
+            'You have entered the wrong recovery password. Please try again.';
+          showToast({ text1: 'Error', text2: msg, type: 'error' });
           return Promise.reject(msg);
         }
       } else if (securityPasswordVisible) {
@@ -170,8 +171,8 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
           );
           createPrivateKey(privateKey, metaData);
         } catch (error) {
-          let msg = 'wrong security password';
-          alert(msg);
+          let msg = 'Social login failed!';
+          showToast({ text1: 'Error', text2: msg, type: 'error' });
           return Promise.reject(msg);
         }
       } else if (isSocialLogin) {
@@ -184,6 +185,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
           createPrivateKey(privateKey, metaData);
         } catch (error) {
           let msg = 'Social login failed!';
+          showToast({ text1: 'Error', text2: msg, type: 'error' });
           return Promise.reject(msg);
         }
       } else {
@@ -228,7 +230,11 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
       }
     } catch (error) {
       console.log('error: ', error);
-      alert(JSON.stringify(error));
+      showToast({
+        text1: 'Error',
+        text2: JSON.stringify(error),
+        type: 'error'
+      });
       return;
     }
   });
@@ -548,6 +554,18 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
         onChangeText={onChange}
         value={value}
         ref={ref}
+        paragraph={
+          <View style={styles.containerNote}>
+            <Text
+              variant="caption"
+              style={styles.textNote}
+              color={colors['orange-800']}
+            >
+              * Please remember the security password to backup the private key
+              in case of losing the private key.
+            </Text>
+          </View>
+        }
       />
     );
   };
@@ -736,6 +754,15 @@ const useStyle = () => {
       paddingTop: 12,
       paddingBottom: 12,
       borderRadius: 8
+    },
+    textNote: {
+      textAlign: 'justify',
+      
+    },
+    containerNote: {
+      flex: 1,
+      alignItems: 'center',
+      paddingTop:7
     }
   });
 };
