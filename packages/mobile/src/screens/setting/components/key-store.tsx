@@ -134,8 +134,7 @@ export const KeyStoreItem: FunctionComponent<{
           <View
             style={{
               flexDirection: 'row',
-              alignItems: 'center',
-              flex: 1
+              alignItems: 'center'
             }}
           >
             {renderFlag(label) && (
