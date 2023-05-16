@@ -106,6 +106,7 @@ export const AccountCard: FunctionComponent<{
       addressComponent={
         <AddressCopyable address={account.bech32Address} maxCharacters={22} />
       }
+      email={selected?.meta?.email}
       name={account?.name || '..'}
       coinType={`${
         keyRingStore.keyRingType === 'ledger'

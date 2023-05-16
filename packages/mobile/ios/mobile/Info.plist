@@ -41,7 +41,9 @@
 	<string>5wwKyCxC0jsz58bFqLvrd5ChWJq4SlenBKp0P</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
-		<string>owallet</string>
+    <string>file</string>
+    <string>owallet</string>
+    <string>URL</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
@@ -66,10 +68,6 @@
 	<string>App uses camera to scan address</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>App uses Face ID to unlock wallet</string>
-  <key>LSApplicationQueriesSchemes</key>
-  <array>
-      <string>URL</string>
-  </array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>DMSans-Bold.ttf</string>

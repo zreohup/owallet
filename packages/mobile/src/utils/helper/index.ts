@@ -103,7 +103,7 @@ export const handleError = (error, url, method) => {
 export const showToast = ({ ...params }: ToastShowParams) => {
   Toast.show({
     type: 'success',
-    visibilityTime:8000,
+    visibilityTime: 8000,
     ...params
   });
 };
@@ -532,7 +532,36 @@ export const getCurrencyByMinimalDenom = (
 export function numberWithCommas(x) {
   return x ? x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
 }
+export const html = `<!DOCTYPE html>
+<html>
+  <head>
+    <script type="module">
+      import init, { interpolate, get_pk } from 'https://unpkg.com/@thresholdkey/blsdkg@1.0.6/blsdkg.js';
+      const fromHexString = (hexString) =>
+        Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
 
+      const toHexString = (bytes) => bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+
+      init().then(() => {
+        try {
+          let shares = JSON.parse(window.shares);
+          shares = shares.map((share) => fromHexString(share));
+          let indexes = JSON.parse(window.indexes);
+          indexes = indexes.map((index) => fromHexString(index));
+          const privKey = interpolate(indexes, shares);
+          const pubKey = get_pk(privKey);
+          const result = {
+            privKey: toHexString(privKey),
+            pubKey: toHexString(pubKey)
+          };
+          window.ReactNativeWebView.postMessage(JSON.stringify({ result }));
+        } catch (error) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ error }));
+        }
+      });
+    </script>
+  </head>
+</html>`
 export function findLedgerAddressWithChainId(ledgerAddresses, chainId) {
   let address;
 
@@ -555,8 +584,7 @@ export function createTxsHelper() {
   return new TxsHelper();
 }
 
-
-export const initBigInt = () => {
+export const initBigInt = (): any => {
   new Promise<boolean>((resolve, reject) => {
     if (typeof BigInt === 'undefined') {
       global.BigInt = require('big-integer');
@@ -566,7 +594,7 @@ export const initBigInt = () => {
   });
 };
 export function removeStringAfterAtEmail(email: string): string {
-  if(!email) return '';
+  if (!email) return '';
   const atIndex = email.indexOf('@');
   if (atIndex !== -1) {
     return email.substring(0, atIndex);

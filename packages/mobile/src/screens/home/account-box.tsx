@@ -26,6 +26,7 @@ export const AccountBox: FunctionComponent<{
   coinType?: any;
   networkType?: 'cosmos' | 'evm';
   name?: string;
+  email?: string;
   addressComponent?: React.ReactNode;
   onPressBtnMain?: (name?: string) => void;
 }> = observer(
@@ -36,6 +37,7 @@ export const AccountBox: FunctionComponent<{
     networkType,
     name,
     totalAmount,
+    email,
     onPressBtnMain
   }) => {
     const { colors } = useTheme();
@@ -204,6 +206,13 @@ export const AccountBox: FunctionComponent<{
                 >
                   {name}
                 </Text>
+                {!email ? (
+                  <TouchableOpacity>
+                    <Text>google</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Text>{email}</Text>
+                )}
               </View>
 
               {addressComponent || null}
@@ -246,7 +255,7 @@ export const AccountBox: FunctionComponent<{
   }
 );
 
-const styling = colors =>
+const styling = (colors) =>
   StyleSheet.create({
     containerLoading: {
       position: 'absolute',
