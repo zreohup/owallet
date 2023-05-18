@@ -1,7 +1,8 @@
-import { observable, action, makeObservable, computed } from 'mobx';
+import {flow,observable, action, makeObservable, computed } from 'mobx';
 import { create, persist } from 'mobx-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { initBigInt } from '@src/utils/helper';
+import { toGenerator } from '@owallet/common';
 export class AppInit {
   @persist('object')
   @observable
@@ -11,6 +12,8 @@ export class AppInit {
     theme: 'dark' | 'light';
     visibleTabBar?: string;
   };
+  @observable
+  public static tKey: any;
   @observable
   protected notiData: {};
 
@@ -22,6 +25,7 @@ export class AppInit {
       date_updated: null,
       theme: 'light'
     };
+    this.initTkey();
   }
 
   @computed
@@ -46,6 +50,30 @@ export class AppInit {
   @action
   updateVisibleTabBar(visibleTabBar) {
     this.initApp = { ...this.initApp, visibleTabBar };
+  }
+  @flow
+  protected *initTkey() {
+    yield* toGenerator(initBigInt());
+    let { default: ThresholdKey } = yield* toGenerator(
+      import('@thresholdkey/default')
+    );
+    let { default: SecurityQuestionsModule } = yield* toGenerator(
+      import('@thresholdkey/security-questions')
+    );
+    let { default: ReactNativeStorage } = yield* toGenerator(
+      import('@thresholdkey/react-native-storage')
+    );
+    AppInit.tKey = new ThresholdKey({
+      modules: {
+        reactNativeStorage: new ReactNativeStorage(),
+        securityQuestions: new SecurityQuestionsModule()
+      },
+      manualSync: false,
+      customAuthArgs: {
+        baseUrl: 'http://localhost/serviceworker',
+        network: 'testnet'
+      } as any
+    });
   }
 }
 

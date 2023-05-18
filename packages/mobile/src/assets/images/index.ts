@@ -3,6 +3,7 @@ const images = {
    launch_dark: require('./Launch_dark.png'),
    noti: require('./Noti.png'),
    noti_dark: require('./Noti_dark.png'),
+   address_default: require('./address_default.png'),
    carbon_notification: require('./carbon_notification.png'),
    carbon_notification_dark: require('./carbon_notification_dark.png'),
    crypto: require('./crypto.png'),

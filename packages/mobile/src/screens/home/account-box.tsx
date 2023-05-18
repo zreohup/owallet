@@ -1,4 +1,4 @@
-import React, { FunctionComponent, ReactElement, useCallback } from 'react';
+import React, { FunctionComponent, ReactElement } from 'react';
 import { observer } from 'mobx-react-lite';
 import { OWBox } from '../../components/card';
 import { View, Image, StyleSheet } from 'react-native';
@@ -19,6 +19,10 @@ import MyWalletModal from './components/my-wallet-modal/my-wallet-modal';
 import { useTheme } from '@src/themes/theme-provider';
 import { OWButton } from '@src/components/button';
 import OWIcon from '@src/components/ow-icon/ow-icon';
+import WebviewSocialLogin, { useLoginSocial } from '../register/google-signin';
+import { PasswordInputModal } from '@src/modals/password-input/modal';
+import { showToast } from '@src/utils/helper';
+import images from '@src/assets/images';
 
 export const AccountBox: FunctionComponent<{
   totalBalance?: string | React.ReactNode;
@@ -26,7 +30,7 @@ export const AccountBox: FunctionComponent<{
   coinType?: any;
   networkType?: 'cosmos' | 'evm';
   name?: string;
-  email?: string;
+
   addressComponent?: React.ReactNode;
   onPressBtnMain?: (name?: string) => void;
 }> = observer(
@@ -37,18 +41,12 @@ export const AccountBox: FunctionComponent<{
     networkType,
     name,
     totalAmount,
-    email,
     onPressBtnMain
   }) => {
     const { colors } = useTheme();
     const styles = styling(colors);
-    const {
-      chainStore,
-      accountStore,
-      queriesStore,
-
-      modalStore
-    } = useStore();
+    const { chainStore, accountStore, queriesStore, keyRingStore, modalStore } =
+      useStore();
 
     const smartNavigation = useSmartNavigation();
 
@@ -63,6 +61,25 @@ export const AccountBox: FunctionComponent<{
       modalStore.setOpen();
       modalStore.setChildren(MyWalletModal());
     };
+    const selected = keyRingStore.multiKeyStoreInfo.find(
+      (keyStore) => keyStore.selected
+    );
+    const {
+      login,
+      loginResponse,
+      setInterpolateResult,
+      isShowModalPass,
+      setIsShowModalPass,
+      setPasswordLock,
+      passwordLock,
+      handleInitInterpolate
+    } = useLoginSocial(
+      coinType,
+      chainStore.current.networkType === 'cosmos'
+        ? account.bech32Address.toString()
+        : account.evmosHexAddress.toString()
+    );
+    console.log('isShowModalPass: ', isShowModalPass);
 
     const RenderBtnMain = ({ name }) => {
       let icon: ReactElement;
@@ -90,6 +107,9 @@ export const AccountBox: FunctionComponent<{
       );
     };
 
+    const index = keyRingStore.multiKeyStoreInfo.findIndex(
+      (keyStore) => keyStore.selected
+    );
     return (
       <View
         style={{
@@ -182,37 +202,49 @@ export const AccountBox: FunctionComponent<{
             >
               <View
                 style={{
-                  display: 'flex',
-                  flexDirection: 'row',
                   alignItems: 'center',
+                  flexDirection: 'row',
                   paddingBottom: spacing['2']
                 }}
               >
-                <Image
+                <View
                   style={{
-                    width: spacing['26'],
-                    height: spacing['26']
-                  }}
-                  source={require('../../assets/image/address_default.png')}
-                  fadeDuration={0}
-                />
-                <Text
-                  style={{
-                    paddingLeft: spacing['6'],
-                    fontWeight: '700',
-                    fontSize: 16,
-                    color: colors['primary-text']
+                    paddingRight: 10
                   }}
                 >
-                  {name}
-                </Text>
-                {!email ? (
-                  <TouchableOpacity>
-                    <Text>google</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <Text>{email}</Text>
-                )}
+                  <OWIcon
+                    type="images"
+                    source={images.address_default}
+                    size={30}
+                  />
+                </View>
+                <View>
+                  <Text
+                    style={{
+                      fontWeight: '700',
+                      fontSize: 16,
+                      color: colors['primary-text']
+                    }}
+                  >
+                    {name}
+                  </Text>
+                  {!selected.meta?.email ? (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setPasswordLock(null);
+                        setIsShowModalPass(true);
+                      }}
+                    >
+                      <Text color={colors['purple-700']}>
+                        Connect with Google account
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <Text color={colors['text-place-holder']}>
+                      {selected.meta?.email}
+                    </Text>
+                  )}
+                </View>
               </View>
 
               {addressComponent || null}
@@ -231,7 +263,6 @@ export const AccountBox: FunctionComponent<{
               <DownArrowIcon height={28} color={colors['primary-text']} />
             </TouchableOpacity>
           </View>
-          {/* <NetworkErrorView /> */}
           <OWButton
             style={{
               width: '100%'
@@ -250,6 +281,78 @@ export const AccountBox: FunctionComponent<{
             }
           />
         </OWBox>
+        <PasswordInputModal
+          key={`${passwordLock}`}
+          isOpen={isShowModalPass}
+          close={() => setIsShowModalPass(false)}
+          paragraphInput={
+            isShowModalPass &&
+            passwordLock && (
+              <View
+                style={{
+                  marginTop: 10
+                }}
+              >
+                <Text
+                  variant="overline"
+                  style={{
+                    textAlign: 'justify'
+                  }}
+                  color={colors['orange-800']}
+                >
+                  * Please remember the security password to backup your wallet
+                  in case of losing the private key.
+                </Text>
+              </View>
+            )
+          }
+          title={
+            isShowModalPass && !passwordLock
+              ? 'Enter your wallet unlock password'
+              : 'Create a new security password for the Google account'
+          }
+          onEnterPassword={async (password) => {
+            if (password?.length < 8) {
+              showToast({
+                text1: 'InValid',
+                text2: 'Password must be longer than 8 characters',
+                type: 'error'
+              });
+              return;
+            }
+            if (isShowModalPass && !passwordLock) {
+              try {
+                const privateData = await keyRingStore.showKeyRing(
+                  index,
+                  password
+                );
+                if (privateData) {
+                  setPasswordLock(password);
+                  login();
+                } else {
+                  setPasswordLock(null);
+                }
+              } catch (error) {
+                console.log('error: ', error);
+                showToast({
+                  text1: 'Invalid',
+                  text2:
+                    'You have entered the wrong password. Please try again.',
+                  type: 'error'
+                });
+              }
+            } else if (isShowModalPass && passwordLock) {
+              handleInitInterpolate(password);
+            }
+          }}
+        />
+        <WebviewSocialLogin
+          loginResponse={loginResponse}
+          handleInterpolateResult={(result) => {
+            console.log('result: ', result);
+            setInterpolateResult({ ...result, isConnectGG: true });
+          }}
+        />
       </View>
     );
   }

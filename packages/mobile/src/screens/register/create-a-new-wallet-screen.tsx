@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Platform } from 'react-native';
+import React from 'react';
+import { StyleSheet } from 'react-native';
 import { PageWithScrollView } from '@src/components/page';
 import { useTheme } from '@src/themes/theme-provider';
 import { HeaderWelcome, OrText } from './components';
@@ -11,17 +11,15 @@ import { useStore } from '@src/stores';
 import { useRegisterConfig } from '@owallet/hooks';
 import { useSmartNavigation } from '@src/navigation.provider';
 import { SCREENS } from '@src/common/constants';
-
-import { KeychainStore } from '@src/stores/keychain';
 import WebviewSocialLogin, { useLoginSocial } from './google-signin';
+import { AppInit } from '@src/stores/app_init';
 
 const CreateANewWalletScreen = () => {
   const { colors } = useTheme();
   const smartNavigation = useSmartNavigation();
   const { keyRingStore, analyticsStore } = useStore();
 
-  const tKey = KeychainStore.tKey;
-  console.log('tKey: ', tKey);
+  const tKey = AppInit.tKey;
 
   const registerConfig = useRegisterConfig(keyRingStore, []);
   const handleCreateANewMnemonic = () => {

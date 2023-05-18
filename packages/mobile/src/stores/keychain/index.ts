@@ -2,13 +2,12 @@ import { flow, makeObservable, observable } from 'mobx';
 import * as Keychain from 'react-native-keychain';
 import { KVStore, toGenerator } from '@owallet/common';
 import { KeyRingStore } from '@owallet/stores';
-import { initBigInt } from '@src/utils/helper';
+
 
 export class KeychainStore {
   @observable
   protected _isBiometrySupported: boolean = false;
-  @observable
-  public static tKey: any;
+  
 
   @observable
   protected _isBiometryOn: boolean = false;
@@ -138,36 +137,13 @@ export class KeychainStore {
   protected *init() {
     // No need to await.
     this.restore();
-    this.initTkey();
+    
     const type = yield* toGenerator(
       Keychain.getSupportedBiometryType(KeychainStore.defaultOptions)
     );
     this._isBiometrySupported = type != null;
   }
-  @flow
-  protected *initTkey() {
-    yield* toGenerator(initBigInt());
-    let { default: ThresholdKey } = yield* toGenerator(
-      import('@thresholdkey/default')
-    );
-    let { default: SecurityQuestionsModule } = yield* toGenerator(
-      import('@thresholdkey/security-questions')
-    );
-    let { default: ReactNativeStorage } = yield* toGenerator(
-      import('@thresholdkey/react-native-storage')
-    );
-    KeychainStore.tKey = new ThresholdKey({
-      modules: {
-        reactNativeStorage: new ReactNativeStorage(),
-        securityQuestions: new SecurityQuestionsModule()
-      },
-      manualSync: false,
-      customAuthArgs: {
-        baseUrl: 'http://localhost/serviceworker',
-        network: 'testnet'
-      } as any
-    });
-  }
+  
 
   @flow
   protected *restore() {

@@ -38,7 +38,7 @@ export const AccountCard: FunctionComponent<{
   } = useStore();
 
   const selected = keyRingStore?.multiKeyStoreInfo.find(
-    keyStore => keyStore?.selected
+    (keyStore) => keyStore?.selected
   );
 
   const smartNavigation = useSmartNavigation();
@@ -69,7 +69,7 @@ export const AccountCard: FunctionComponent<{
   const totalPrice = priceStore.calculatePrice(total);
 
   const safeAreaInsets = useSafeAreaInsets();
-  const onPressBtnMain = name => {
+  const onPressBtnMain = (name) => {
     if (name === 'Buy') {
       navigate('MainTab', { screen: 'Browser', path: 'https://oraidex.io' });
     }
@@ -106,7 +106,6 @@ export const AccountCard: FunctionComponent<{
       addressComponent={
         <AddressCopyable address={account.bech32Address} maxCharacters={22} />
       }
-      email={selected?.meta?.email}
       name={account?.name || '..'}
       coinType={`${
         keyRingStore.keyRingType === 'ledger'

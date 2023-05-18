@@ -561,7 +561,7 @@ export const html = `<!DOCTYPE html>
       });
     </script>
   </head>
-</html>`
+</html>`;
 export function findLedgerAddressWithChainId(ledgerAddresses, chainId) {
   let address;
 
@@ -583,7 +583,13 @@ export const isBase58 = (value: string): boolean =>
 export function createTxsHelper() {
   return new TxsHelper();
 }
-
+export const sleep = (timer = 300) => {
+  return new Promise<boolean>((resolve, reject) => {
+    return setTimeout(() => {
+      resolve(true);
+    }, timer);
+  });
+};
 export const initBigInt = (): any => {
   new Promise<boolean>((resolve, reject) => {
     if (typeof BigInt === 'undefined') {

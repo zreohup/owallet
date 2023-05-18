@@ -1,15 +1,18 @@
 import { StyleSheet, Text, View } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { KeychainStore } from '@src/stores/keychain';
 import * as WebBrowser from 'expo-web-browser';
 import WebView from 'react-native-webview';
 import BN from 'bn.js';
 import { useLoadingScreen } from '@src/providers/loading-screen';
 import { navigate } from '@src/router/root';
-import { html } from '@src/utils/helper';
+import { html, showToast, sleep } from '@src/utils/helper';
 import { SCREENS } from '@src/common/constants';
 import { useStore } from '@src/stores';
 import { useRegisterConfig } from '@owallet/hooks';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API } from '@src/common/api';
+import { AppInit } from '@src/stores/app_init';
 type GenericObject = {
   [key: string]: string;
 };
@@ -18,25 +21,34 @@ const CLIENT_ID =
   '349137538811-8t7s7584app6am5j09a2kglo8dg39eqn.apps.googleusercontent.com';
 const WebviewSocialLogin = ({ loginResponse, handleInterpolateResult }) => {
   const loadingScreen = useLoadingScreen();
+  const [keyWebview, setKeyWebview] = useState(1);
+  useEffect(() => {
+    if (loginResponse) {
+      setKeyWebview(keyWebview + 1);
+    }
+    return () => {};
+  }, [loginResponse]);
 
-  if (loginResponse)
+  if (loginResponse) {
     return (
       <View
         style={{
           display: 'none'
         }}
+        key={keyWebview}
       >
         <WebView
+          key={keyWebview}
           source={{ html }}
           javaScriptEnabled={true}
           injectedJavaScript={`
-      window.shares = '${JSON.stringify(
-        loginResponse.shares.map((share) => share.toString('hex'))
-      )}';
-      window.indexes = '${JSON.stringify(
-        loginResponse.sharesIndexes.map((index) => index.toString('hex'))
-      )}';
-    `}
+          window.shares = '${JSON.stringify(
+            loginResponse.shares.map((share) => share.toString('hex'))
+          )}';
+          window.indexes = '${JSON.stringify(
+            loginResponse.sharesIndexes.map((index) => index.toString('hex'))
+          )}';
+        `}
           onMessage={(event) => {
             console.log(
               '🚀 ~ file: index.tsx:37 ~ constRegisterIntroScreen:FunctionComponent=observer ~ event:',
@@ -45,27 +57,33 @@ const WebviewSocialLogin = ({ loginResponse, handleInterpolateResult }) => {
             const { result, error } = JSON.parse(event.nativeEvent.data);
             if (error) {
               loadingScreen.setIsLoading(false);
-              return console.log('🚀 ~ file: index.tsx:131 ~ error:', error);
+              console.log('🚀 ~ file: index.tsx:131 ~ error:', error);
             }
             handleInterpolateResult(result);
           }}
         />
       </View>
     );
+  }
+
   return null;
 };
 
 export default WebviewSocialLogin;
 
-export const useLoginSocial = () => {
+export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
   const { keyRingStore } = useStore();
-  const tKey = KeychainStore.tKey;
+
+  const tKey = AppInit.tKey;
   const registerConfig = useRegisterConfig(keyRingStore, []);
   const [loginResponse, setLoginResponse] = useState<any>();
+  const [isShowModalPass, setIsShowModalPass] = useState(false);
+  const [passwordLock, setPasswordLock] = useState(null);
   const [interpolateResult, setInterpolateResult] = useState<{
     pubKey: string;
     privKey: string;
   }>();
+
   const loadingScreen = useLoadingScreen();
   const initServiceProvider = async () => {
     // Initialization of Service Provider
@@ -78,6 +96,7 @@ export const useLoginSocial = () => {
       console.error(error);
     }
   };
+
   useEffect(() => {
     if (tKey) {
       initServiceProvider();
@@ -85,14 +104,24 @@ export const useLoginSocial = () => {
   }, [tKey]);
 
   useEffect(() => {
-    if (interpolateResult) {
-      if (interpolateResult.pubKey !== loginResponse.thresholdPublicKey) {
-        return console.log(`Public key isn't same with contract`);
-      }
-      initialize(interpolateResult.privKey);
-    }
+    handleInitInterpolate();
   }, [interpolateResult]);
 
+  const isConnectGG = useRef();
+
+  const handleInitInterpolate = useCallback(
+    (securityPass = null) => {
+      if (interpolateResult) {
+        if (interpolateResult.pubKey !== loginResponse.thresholdPublicKey) {
+          return console.log(`Public key isn't same with contract`);
+        }
+        loadingScreen.openAsync();
+        isConnectGG.current = (interpolateResult as any)?.isConnectGG;
+        initialize(interpolateResult.privKey, securityPass);
+      }
+    },
+    [interpolateResult]
+  );
   const login = async () => {
     try {
       const nonce: string = Math.floor(Math.random() * 10000).toString();
@@ -148,6 +177,7 @@ export const useLoginSocial = () => {
     queryParameters: GenericObject
   ) => {
     if (!tKey) {
+      loadingScreen.setIsLoading(false);
       return;
     }
     try {
@@ -161,9 +191,13 @@ export const useLoginSocial = () => {
         hash,
         queryParameters
       });
-      console.log('userInfo: ', userInfo);
 
-      setLoginResponse({ shares, sharesIndexes, userInfo, thresholdPublicKey });
+      setLoginResponse({
+        shares,
+        sharesIndexes,
+        userInfo,
+        thresholdPublicKey
+      });
     } catch (error) {
       loadingScreen.setIsLoading(false);
       console.log(
@@ -179,50 +213,139 @@ export const useLoginSocial = () => {
     ).directWeb.torus.getPrivKey(new BN(privKey, 'hex'));
     (tKey.serviceProvider as any).setPostboxKey(privateKey.privKey);
   };
-
-  const initialize = async (privKey: string) => {
+  const checkEmailRegistered = async (securityPass: string = null) => {
     try {
-      await getPostBoxKey(privKey);
-      await tKey.initialize();
-      try {
-        await (
-          tKey.modules.reactNativeStorage as any
-        ).inputShareFromReactNativeStorage();
-      } catch (error) {
-        console.log('🚀 ~ file: index.tsx:154 ~ initialize ~ error:', error);
-        loadingScreen.setIsLoading(false);
-        navigate(SCREENS.RegisterRecoverMnemonic, {
-          registerConfig,
-          recoveryVisible: true,
-          userInfo: loginResponse['userInfo'],
-          tKey
+      const checkEmailRegistered =
+        await tKey.getGenericMetadataWithTransitionStates({
+          serviceProvider: tKey.serviceProvider,
+          fromJSONConstructor: {
+            fromJSON(val) {
+              return val;
+            }
+          }
         });
-        // return setRecoveryVisible(true);
+
+      console.log('checkEmailRegistered: ', checkEmailRegistered);
+      if (checkEmailRegistered?.message === 'KEY_NOT_FOUND' && !securityPass) {
+        setIsShowModalPass(true);
+        return Promise.reject(false);
+        // return;
+      } else if (
+        checkEmailRegistered?.message === 'KEY_NOT_FOUND' &&
+        securityPass
+      ) {
+        return true;
       }
-      await reconstructKey();
+      showToast({
+        text1: 'Exits',
+        text2:
+          'The email already exists, please try again with a different email.',
+        type: 'error'
+      });
+      return Promise.reject(
+        'The email already exists, please try again with a different email.'
+      );
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  };
+
+  const initialize = async (privKey: string, securityPass?: string) => {
+    try {
+      console.log('chainStore.current.coinType: ', coinType);
+
+      await getPostBoxKey(privKey);
+      if (isConnectGG.current && tKey && coinType) {
+        await checkEmailRegistered(securityPass);
+        const priv = await keyRingStore.connectGoogleWallet(
+          parseInt(coinType),
+          tKey
+        );
+
+        await tKey.initialize({
+          importKey: new BN(priv, 'hex')
+        });
+        handleData(priv);
+      } else {
+        await tKey.initialize();
+        handleData();
+      }
     } catch (error) {
       loadingScreen.setIsLoading(false);
       console.log('🚀 ~ file: index.tsx:157 ~ initialize ~ error:', error);
     }
   };
+  const handleData = async (priv = null) => {
+    try {
+      try {
+        await (
+          tKey.modules.reactNativeStorage as any
+        ).inputShareFromReactNativeStorage();
+        const deviceShare = await (
+          tKey.modules.reactNativeStorage as any
+        ).getStoreFromReactNativeStorage();
+        AsyncStorage.setItem(
+          `${loginResponse['userInfo']?.email}_share`,
+          JSON.stringify(deviceShare)
+        );
+        console.log('deviceShare: ', deviceShare);
+        console.log('test email', `${loginResponse['userInfo']?.email}_share`);
+      } catch (error) {
+        console.log('🚀 ~ file: index.tsx:154 ~ initialize ~ error:', error);
+        loadingScreen.setIsLoading(false);
+        // handleRecoveryPassword
+        if (!isConnectGG.current) {
+          navigate(SCREENS.RegisterRecoverMnemonic, {
+            registerConfig,
+            recoveryVisible: true,
+            userInfo: loginResponse['userInfo']
+          });
+          return;
+        }
+      }
+      await reconstructKey(priv);
+    } catch (error) {
+      console.log('🚀 ~ file: index.tsx:345 ~ handleData ~ error:', error);
+    }
+  };
+  const onUnSubscribeToTopic = React.useCallback(async () => {
+    const fcmToken = await AsyncStorage.getItem('FCM_TOKEN');
 
-  const reconstructKey = async () => {
+    if (fcmToken) {
+      const unsubcriber = await API.unsubcribeTopic(
+        {
+          subcriber: fcmToken,
+          topic: addressAcc
+        },
+        {
+          baseURL: 'https://tracking-tx.orai.io'
+        }
+      );
+      console.log('un-subcriber ===', unsubcriber);
+    }
+  }, []);
+  const index = keyRingStore.multiKeyStoreInfo.findIndex(
+    (keyStore) => keyStore.selected
+  );
+  const reconstructKey = async (priv = null) => {
     const { requiredShares, shareDescriptions } = tKey.getKeyDetails();
 
     if (requiredShares <= 0) {
       const reconstructedKey = await tKey.reconstructKey();
       loadingScreen.setIsLoading(false);
-      navigate(SCREENS.RegisterRecoverMnemonic, {
-        registerConfig,
-        userInfo: loginResponse['userInfo'],
-        tKey
-      });
+      if (!isConnectGG.current) {
+        navigate(SCREENS.RegisterRecoverMnemonic, {
+          registerConfig,
+          userInfo: loginResponse['userInfo']
+        });
+      }
+
       console.log(
         '🚀 ~ file: index.tsx:161 ~ initialize ~ reconstructedKey.privKey:',
         reconstructedKey?.privKey.toString('hex')
       );
       let isExistSecurityQuestions = false;
-      Object.values(shareDescriptions).forEach((descriptions) => {
+      Object.values(shareDescriptions).forEach((descriptions: any) => {
         descriptions.forEach((el) => {
           const description = JSON.parse(el);
           if (
@@ -239,16 +362,84 @@ export const useLoginSocial = () => {
       );
       if (!isExistSecurityQuestions) {
         loadingScreen.setIsLoading(false);
-        navigate(SCREENS.RegisterRecoverMnemonic, {
-          registerConfig,
-          securityPasswordVisible: true,
-          userInfo: loginResponse['userInfo'],
-          tKey
-        });
+        if (!isConnectGG.current) {
+          navigate(SCREENS.RegisterRecoverMnemonic, {
+            registerConfig,
+            securityPasswordVisible: true,
+            userInfo: loginResponse['userInfo']
+          });
+        } else {
+          try {
+            const metaData = {
+              email: loginResponse['userInfo']?.email,
+              type: 'google'
+            };
+            await generateNewShareWithPassword(passwordLock);
+            console.log(
+              'reconstruc ',
+              reconstructedKey?.privKey?.toString('hex')
+            );
+            const privKeyData = reconstructedKey?.privKey;
+            console.log('privKeyData: ', privKeyData);
+            const keyStore = keyRingStore.multiKeyStoreInfo.find(
+              (keyStore) => keyStore.selected
+            );
+
+            setIsShowModalPass(false);
+            await createPrivateKey(
+              priv,
+              metaData,
+              passwordLock,
+              keyStore ? keyStore.meta?.name : 'Anonymous'
+            );
+            await keyRingStore.deleteKeyRing(index, passwordLock);
+            await onUnSubscribeToTopic();
+          } catch (error) {
+            loadingScreen.setIsLoading(false);
+            console.log('error: ', error);
+          }
+        }
       }
     }
   };
+  const generateNewShareWithPassword = async (pass) => {
+    if (!tKey) {
+      return;
+    }
+    try {
+      await (
+        tKey.modules.securityQuestions as any
+      ).generateNewShareWithSecurityQuestions(pass, 'whats your password?');
+      console.log('generate successfully');
+    } catch (error) {
+      console.log(
+        '🚀 ~ file: index.tsx:216 ~ generateNewShareWithPassword ~ error:',
+        error
+      );
 
-  return { login, loginResponse, setInterpolateResult };
+      return Promise.reject(error);
+    }
+  };
+
+  const createPrivateKey = async (privateKey, meta, password, name) => {
+    try {
+      await registerConfig.createPrivateKey(name, privateKey, password, {
+        ...meta
+      });
+    } catch (error) {
+      console.log('error: ', error);
+    }
+  };
+
+  return {
+    login,
+    loginResponse,
+    setInterpolateResult,
+    isShowModalPass,
+    setIsShowModalPass,
+    setPasswordLock,
+    passwordLock,
+    handleInitInterpolate
+  };
 };
 const styles = StyleSheet.create({});

@@ -19,11 +19,7 @@ import Clipboard from 'expo-clipboard';
 import { useStore } from '../../../stores';
 import { BIP44AdvancedButton, useBIP44Option } from '../bip44';
 import { Buffer } from 'buffer';
-import {
-  checkRouter,
-  checkRouterPaddingBottomBar,
-  navigate
-} from '../../../router/root';
+import { checkRouter, navigate } from '../../../router/root';
 import { OWalletLogo } from '../owallet-logo';
 import { spacing, typography } from '../../../themes';
 import { LoadingSpinner } from '../../../components/spinner';
@@ -32,6 +28,7 @@ import OWIcon from '../../../components/ow-icon/ow-icon';
 import { SCREENS } from '@src/common/constants';
 import { removeStringAfterAtEmail, showToast } from '@src/utils/helper';
 import { Text } from '@src/components/text';
+import { AppInit } from '@src/stores/app_init';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const bip39 = require('bip39');
@@ -80,7 +77,6 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
           recoveryVisible?: boolean;
           securityPasswordVisible?: boolean;
           userInfo?: any;
-          tKey?: any;
         }
       >,
       string
@@ -94,7 +90,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   const recoveryVisible = route.params?.recoveryVisible;
   const securityPasswordVisible = route.params?.securityPasswordVisible;
   const userInfo = route.params?.userInfo;
-  const tKey = route.params?.tKey;
+  const tKey = AppInit.tKey;
   const {
     control,
     handleSubmit,
@@ -154,6 +150,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
               privKey.trim().replace('0x', ''),
               'hex'
             );
+            console.log('privateKey init: ', privateKey);
             createPrivateKey(privateKey, metaData);
           }
         } catch (error) {
@@ -169,6 +166,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
             privKey.trim().replace('0x', ''),
             'hex'
           );
+          console.log('privateKey init: ', privateKey);
           createPrivateKey(privateKey, metaData);
         } catch (error) {
           let msg = 'Social login failed!';
@@ -182,6 +180,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
             privKey.trim().replace('0x', ''),
             'hex'
           );
+          console.log('privateKey init: ', privateKey);
           createPrivateKey(privateKey, metaData);
         } catch (error) {
           let msg = 'Social login failed!';
@@ -398,8 +397,8 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
     }
   };
   const validateName = (value: string) => {
-    if (value.length < 6) {
-      return 'Username must be longer than 8 characters';
+    if (value.length < 3) {
+      return 'Username must be longer than 3 characters';
     }
   };
   const validateSecurityPass = (value: string) => {
@@ -561,8 +560,8 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
               style={styles.textNote}
               color={colors['orange-800']}
             >
-              * Please remember the security password to backup the private key
-              in case of losing the private key.
+              * Please remember the security password to backup your wallet in
+              case of losing the private key.
             </Text>
           </View>
         }
@@ -756,13 +755,11 @@ const useStyle = () => {
       borderRadius: 8
     },
     textNote: {
-      textAlign: 'justify',
-      
+      textAlign: 'justify'
     },
     containerNote: {
-      flex: 1,
       alignItems: 'center',
-      paddingTop:7
+      paddingTop: 7
     }
   });
 };

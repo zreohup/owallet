@@ -23,12 +23,13 @@ export const PasswordInputModal: FunctionComponent<{
   isOpen: boolean;
   close: () => void;
   title: string;
-  paragraph?: string;
+  paragraph?: any;
   labelStyle?: TextStyle;
   textButtonLeft?: string;
   textButtonRight?: string;
   buttonRightStyle?: TextStyle;
   disabled?: boolean;
+  paragraphInput?:any;
   /**
    * If any error thrown in the `onEnterPassword`, the password considered as invalid password.
    * @param password
@@ -44,7 +45,8 @@ export const PasswordInputModal: FunctionComponent<{
     textButtonLeft = 'Cancel',
     textButtonRight = 'Approve',
     buttonRightStyle,
-    disabled
+    disabled,
+    paragraphInput
   }) => {
     const { appInitStore } = useStore();
     const [password, setPassword] = useState('');
@@ -80,7 +82,7 @@ export const PasswordInputModal: FunctionComponent<{
               Keyboard.dismiss();
             }}
           >
-            {paragraph ? (
+            {typeof paragraph === 'string' ? (
               <Text
                 style={{
                   ...typography['body2'],
@@ -94,12 +96,12 @@ export const PasswordInputModal: FunctionComponent<{
                 {paragraph || 'Do not reveal your mnemonic to anyone'}
               </Text>
             ) : (
-              <Text />
+              paragraph
             )}
             <TextInput
               label="Enter your password to continue"
               error={isInvalidPassword ? 'Invalid password' : undefined}
-              onChangeText={text => {
+              onChangeText={(text) => {
                 setPassword(text);
               }}
               labelStyle={{
@@ -122,6 +124,7 @@ export const PasswordInputModal: FunctionComponent<{
               }}
               value={password}
               returnKeyType="done"
+              paragraph={paragraphInput}
               secureTextEntry={true}
               onSubmitEditing={submitPassword}
             />
