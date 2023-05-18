@@ -322,11 +322,11 @@ export const AccountBox: FunctionComponent<{
             }
             if (isShowModalPass && !passwordLock) {
               try {
-                const privateData = await keyRingStore.showKeyRing(
-                  index,
+                const privateKeyData = await keyRingStore.connectGoogleWallet(
+                  parseInt(coinType),
                   password
                 );
-                if (privateData) {
+                if (privateKeyData) {
                   setPasswordLock(password);
                   login();
                 } else {

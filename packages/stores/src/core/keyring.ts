@@ -392,9 +392,9 @@ export class KeyRingStore {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return this.selectablesMap.get(chainId)!;
   }
-  
-  async connectGoogleWallet(coinType: number, tKey: any) {
-    const msg = new ConnectGoogleWalletMsg(coinType,tKey);
+
+  async connectGoogleWallet(coinType: number, password: string) {
+    const msg = new ConnectGoogleWalletMsg(coinType, password);
     return await this.requester.sendMessage(BACKGROUND_PORT, msg);
   }
   // Set the coin type to current key store.

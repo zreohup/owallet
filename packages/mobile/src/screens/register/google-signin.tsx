@@ -257,15 +257,15 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
       await getPostBoxKey(privKey);
       if (isConnectGG.current && tKey && coinType) {
         await checkEmailRegistered(securityPass);
-        const priv = await keyRingStore.connectGoogleWallet(
+        const privateKeyData = await keyRingStore.connectGoogleWallet(
           parseInt(coinType),
-          tKey
+          passwordLock
         );
 
         await tKey.initialize({
-          importKey: new BN(priv, 'hex')
+          importKey: new BN(privateKeyData, 'hex')
         });
-        handleData(priv);
+        handleData(privateKeyData);
       } else {
         await tKey.initialize();
         handleData();
@@ -275,7 +275,7 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
       console.log('🚀 ~ file: index.tsx:157 ~ initialize ~ error:', error);
     }
   };
-  const handleData = async (priv = null) => {
+  const handleData = async (privateKeyData = null) => {
     try {
       try {
         await (
@@ -303,7 +303,7 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
           return;
         }
       }
-      await reconstructKey(priv);
+      await reconstructKey(privateKeyData);
     } catch (error) {
       console.log('🚀 ~ file: index.tsx:345 ~ handleData ~ error:', error);
     }
@@ -327,7 +327,7 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
   const index = keyRingStore.multiKeyStoreInfo.findIndex(
     (keyStore) => keyStore.selected
   );
-  const reconstructKey = async (priv = null) => {
+  const reconstructKey = async (privateKeyData = null) => {
     const { requiredShares, shareDescriptions } = tKey.getKeyDetails();
 
     if (requiredShares <= 0) {
@@ -387,7 +387,7 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
 
             setIsShowModalPass(false);
             await createPrivateKey(
-              priv,
+              privateKeyData,
               metaData,
               passwordLock,
               keyStore ? keyStore.meta?.name : 'Anonymous'
