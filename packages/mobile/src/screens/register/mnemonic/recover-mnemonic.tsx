@@ -140,7 +140,11 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   const submit = handleSubmit(async () => {
     try {
       setIsCreating(true);
-      const metaData = { email: userInfo?.email, type: 'google' };
+      const metaData = {
+        email: userInfo?.email,
+        type: 'google',
+        avatar: userInfo?.profileImage
+      };
 
       if (recoveryVisible) {
         try {

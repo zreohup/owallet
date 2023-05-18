@@ -1,9 +1,15 @@
 import React from 'react';
-import { Image, ImageSourcePropType, StyleSheet } from 'react-native';
+import {
+  Image,
+  ImageSourcePropType,
+  StyleSheet,
+  ImageStyle
+} from 'react-native';
 import Icon, { IconProps } from './icomoon';
 export interface IOWIconProps extends IconProps {
   type?: 'images';
   source?: ImageSourcePropType;
+  styleImage?: ImageStyle;
 }
 const OWIcon = ({ type, ...props }: IOWIconProps) => {
   if (type == 'images')
@@ -12,7 +18,8 @@ const OWIcon = ({ type, ...props }: IOWIconProps) => {
         style={{
           width: props.size,
           height: props.size,
-          tintColor: props.color
+          tintColor: props.color,
+          ...props.styleImage
         }}
         source={props.source}
         resizeMode="contain"

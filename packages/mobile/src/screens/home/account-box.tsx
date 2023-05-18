@@ -214,8 +214,15 @@ export const AccountBox: FunctionComponent<{
                 >
                   <OWIcon
                     type="images"
-                    source={images.address_default}
-                    size={30}
+                    source={
+                      selected.meta?.avatar
+                        ? { uri: selected.meta?.avatar }
+                        : images.address_default
+                    }
+                    styleImage={{
+                      borderRadius: 32
+                    }}
+                    size={32}
                   />
                 </View>
                 <View>
@@ -236,7 +243,7 @@ export const AccountBox: FunctionComponent<{
                       }}
                     >
                       <Text color={colors['purple-700']}>
-                        Connect with Google account
+                        Link to Google account
                       </Text>
                     </TouchableOpacity>
                   ) : (

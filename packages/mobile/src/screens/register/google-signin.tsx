@@ -13,6 +13,7 @@ import { useRegisterConfig } from '@owallet/hooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API } from '@src/common/api';
 import { AppInit } from '@src/stores/app_init';
+import { useSmartNavigation } from '@src/navigation.provider';
 type GenericObject = {
   [key: string]: string;
 };
@@ -79,6 +80,7 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
   const [loginResponse, setLoginResponse] = useState<any>();
   const [isShowModalPass, setIsShowModalPass] = useState(false);
   const [passwordLock, setPasswordLock] = useState(null);
+  const smartNavigation = useSmartNavigation();
   const [interpolateResult, setInterpolateResult] = useState<{
     pubKey: string;
     privKey: string;
@@ -191,7 +193,7 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
         hash,
         queryParameters
       });
-
+      console.log('userInfo: ', userInfo);
       setLoginResponse({
         shares,
         sharesIndexes,
@@ -332,7 +334,7 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
 
     if (requiredShares <= 0) {
       const reconstructedKey = await tKey.reconstructKey();
-      loadingScreen.setIsLoading(false);
+
       if (!isConnectGG.current) {
         navigate(SCREENS.RegisterRecoverMnemonic, {
           registerConfig,
@@ -361,8 +363,8 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
         isExistSecurityQuestions
       );
       if (!isExistSecurityQuestions) {
-        loadingScreen.setIsLoading(false);
         if (!isConnectGG.current) {
+          loadingScreen.setIsLoading(false);
           navigate(SCREENS.RegisterRecoverMnemonic, {
             registerConfig,
             securityPasswordVisible: true,
@@ -372,6 +374,7 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
           try {
             const metaData = {
               email: loginResponse['userInfo']?.email,
+              avatar: loginResponse['userInfo']?.profileImage,
               type: 'google'
             };
             await generateNewShareWithPassword(passwordLock);
@@ -394,6 +397,8 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
             );
             await keyRingStore.deleteKeyRing(index, passwordLock);
             await onUnSubscribeToTopic();
+            loadingScreen.setIsLoading(false);
+            return;
           } catch (error) {
             loadingScreen.setIsLoading(false);
             console.log('error: ', error);
