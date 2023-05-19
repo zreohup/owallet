@@ -55,7 +55,7 @@ export class Mnemonic {
     return bip39.entropyToMnemonic(Buffer.from(bytes).toString('hex'));
   }
 
-  static generateWalletFromMnemonic(
+  public static generateWalletFromMnemonic(
     mnemonic: string,
     path: string = `m/44'/118'/0'/0/0`,
     password: string = ''

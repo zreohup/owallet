@@ -1,6 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { KeychainStore } from '@src/stores/keychain';
 import * as WebBrowser from 'expo-web-browser';
 import WebView from 'react-native-webview';
 import BN from 'bn.js';
@@ -13,7 +12,7 @@ import { useRegisterConfig } from '@owallet/hooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API } from '@src/common/api';
 import { AppInit } from '@src/stores/app_init';
-import { useSmartNavigation } from '@src/navigation.provider';
+
 type GenericObject = {
   [key: string]: string;
 };
@@ -72,7 +71,7 @@ const WebviewSocialLogin = ({ loginResponse, handleInterpolateResult }) => {
 
 export default WebviewSocialLogin;
 
-export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
+export const useLoginSocial = (addressAcc?: string) => {
   const { keyRingStore } = useStore();
 
   const tKey = AppInit.tKey;
@@ -80,7 +79,7 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
   const [loginResponse, setLoginResponse] = useState<any>();
   const [isShowModalPass, setIsShowModalPass] = useState(false);
   const [passwordLock, setPasswordLock] = useState(null);
-  const smartNavigation = useSmartNavigation();
+  const [privateKeyExternal, setPrivateKeyExternal] = useState(null);
   const [interpolateResult, setInterpolateResult] = useState<{
     pubKey: string;
     privKey: string;
@@ -254,20 +253,13 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
 
   const initialize = async (privKey: string, securityPass?: string) => {
     try {
-      console.log('chainStore.current.coinType: ', coinType);
-
       await getPostBoxKey(privKey);
-      if (isConnectGG.current && tKey && coinType) {
+      if (isConnectGG.current && privateKeyExternal) {
         await checkEmailRegistered(securityPass);
-        const privateKeyData = await keyRingStore.connectGoogleWallet(
-          parseInt(coinType),
-          passwordLock
-        );
-
         await tKey.initialize({
-          importKey: new BN(privateKeyData, 'hex')
+          importKey: new BN(privateKeyExternal, 'hex')
         });
-        handleData(privateKeyData);
+        handleData();
       } else {
         await tKey.initialize();
         handleData();
@@ -277,7 +269,7 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
       console.log('🚀 ~ file: index.tsx:157 ~ initialize ~ error:', error);
     }
   };
-  const handleData = async (privateKeyData = null) => {
+  const handleData = async () => {
     try {
       try {
         await (
@@ -295,7 +287,6 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
       } catch (error) {
         console.log('🚀 ~ file: index.tsx:154 ~ initialize ~ error:', error);
         loadingScreen.setIsLoading(false);
-        // handleRecoveryPassword
         if (!isConnectGG.current) {
           navigate(SCREENS.RegisterRecoverMnemonic, {
             registerConfig,
@@ -305,7 +296,7 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
           return;
         }
       }
-      await reconstructKey(privateKeyData);
+      await reconstructKey();
     } catch (error) {
       console.log('🚀 ~ file: index.tsx:345 ~ handleData ~ error:', error);
     }
@@ -329,13 +320,14 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
   const index = keyRingStore.multiKeyStoreInfo.findIndex(
     (keyStore) => keyStore.selected
   );
-  const reconstructKey = async (privateKeyData = null) => {
+  const reconstructKey = async () => {
     const { requiredShares, shareDescriptions } = tKey.getKeyDetails();
 
     if (requiredShares <= 0) {
       const reconstructedKey = await tKey.reconstructKey();
 
       if (!isConnectGG.current) {
+        loadingScreen.setIsLoading(false);
         navigate(SCREENS.RegisterRecoverMnemonic, {
           registerConfig,
           userInfo: loginResponse['userInfo']
@@ -378,30 +370,13 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
               type: 'google'
             };
             await generateNewShareWithPassword(passwordLock);
-            console.log(
-              'reconstruc ',
-              reconstructedKey?.privKey?.toString('hex')
-            );
-            const privKeyData = reconstructedKey?.privKey;
-            console.log('privKeyData: ', privKeyData);
-            const keyStore = keyRingStore.multiKeyStoreInfo.find(
-              (keyStore) => keyStore.selected
-            );
-
             setIsShowModalPass(false);
-            await createPrivateKey(
-              privateKeyData,
-              metaData,
-              passwordLock,
-              keyStore ? keyStore.meta?.name : 'Anonymous'
-            );
-            await keyRingStore.deleteKeyRing(index, passwordLock);
-            await onUnSubscribeToTopic();
+            await keyRingStore.updateMetaKeyRing(index, metaData);
             loadingScreen.setIsLoading(false);
             return;
           } catch (error) {
             loadingScreen.setIsLoading(false);
-            console.log('error: ', error);
+            console.log('createPrivateKey error: ', error);
           }
         }
       }
@@ -444,7 +419,9 @@ export const useLoginSocial = (coinType: any = null, addressAcc?: string) => {
     setIsShowModalPass,
     setPasswordLock,
     passwordLock,
-    handleInitInterpolate
+    handleInitInterpolate,
+    setPrivateKeyExternal,
+    privateKeyExternal
   };
 };
 const styles = StyleSheet.create({});

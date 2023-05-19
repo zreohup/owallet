@@ -1,3 +1,4 @@
+
 import { BACKGROUND_PORT, MessageRequester } from '@owallet/router';
 import {
   AddLedgerKeyMsg,
@@ -26,7 +27,7 @@ import {
   ExportKeyRingDatasMsg,
   ChangeChainMsg,
   AddressesLedger,
-  ConnectGoogleWalletMsg
+  UpdateMetaKeyRingMsg,
 } from '@owallet/background';
 
 import { computed, flow, makeObservable, observable, runInAction } from 'mobx';
@@ -364,7 +365,22 @@ export class KeyRingStore {
       this.dispatchKeyStoreChangeEvent();
     }
   }
-
+  @flow
+  *updateMetaKeyRing(index: number, meta: any) {
+    const msg = new UpdateMetaKeyRingMsg(index, meta);
+    console.log('msg: updateMetaKeyRing', msg);
+    const result = yield* toGenerator(
+      this.requester.sendMessage(BACKGROUND_PORT, msg)
+    );
+    this.multiKeyStoreInfo = result.multiKeyStoreInfo;
+    const selectedIndex = this.multiKeyStoreInfo.findIndex(
+      (keyStore) => keyStore.selected
+    );
+    // If selectedIndex and index are same, name could be changed, so dispatch keystore event
+    if (selectedIndex === index) {
+      this.dispatchKeyStoreChangeEvent();
+    }
+  }
   async checkPassword(password: string): Promise<boolean> {
     console.log('password 3', password);
 
@@ -393,10 +409,7 @@ export class KeyRingStore {
     return this.selectablesMap.get(chainId)!;
   }
 
-  async connectGoogleWallet(coinType: number, password: string) {
-    const msg = new ConnectGoogleWalletMsg(coinType, password);
-    return await this.requester.sendMessage(BACKGROUND_PORT, msg);
-  }
+  
   // Set the coin type to current key store.
   // And, save it, refresh the key store.
   @flow

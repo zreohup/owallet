@@ -33,7 +33,7 @@ import { AppInit } from '@src/stores/app_init';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const bip39 = require('bip39');
 
-function isPrivateKey(str: string): boolean {
+export function isPrivateKey(str: string): boolean {
   if (str?.startsWith('0x')) {
     return true;
   }
@@ -149,6 +149,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
       if (recoveryVisible) {
         try {
           const privKey = await recoverShare();
+          console.log('privKey: ', privKey);
           if (privKey) {
             const privateKey = Buffer.from(
               privKey.trim().replace('0x', ''),

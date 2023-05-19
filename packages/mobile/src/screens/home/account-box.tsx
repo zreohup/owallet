@@ -1,4 +1,4 @@
-import React, { FunctionComponent, ReactElement } from 'react';
+import React, { FunctionComponent, ReactElement, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { OWBox } from '../../components/card';
 import { View, Image, StyleSheet } from 'react-native';
@@ -22,6 +22,8 @@ import OWIcon from '@src/components/ow-icon/ow-icon';
 import WebviewSocialLogin, { useLoginSocial } from '../register/google-signin';
 import { PasswordInputModal } from '@src/modals/password-input/modal';
 import { showToast } from '@src/utils/helper';
+
+import { isPrivateKey } from '../register/mnemonic';
 import images from '@src/assets/images';
 
 export const AccountBox: FunctionComponent<{
@@ -72,12 +74,13 @@ export const AccountBox: FunctionComponent<{
       setIsShowModalPass,
       setPasswordLock,
       passwordLock,
-      handleInitInterpolate
+      handleInitInterpolate,
+      setPrivateKeyExternal,
+      privateKeyExternal
     } = useLoginSocial(
-      coinType,
       chainStore.current.networkType === 'cosmos'
-        ? account.bech32Address.toString()
-        : account.evmosHexAddress.toString()
+        ? account?.bech32Address
+        : account?.evmosHexAddress
     );
     console.log('isShowModalPass: ', isShowModalPass);
 
@@ -215,8 +218,8 @@ export const AccountBox: FunctionComponent<{
                   <OWIcon
                     type="images"
                     source={
-                      selected.meta?.avatar
-                        ? { uri: selected.meta?.avatar }
+                      selected?.meta?.avatar
+                        ? { uri: selected?.meta?.avatar }
                         : images.address_default
                     }
                     styleImage={{
@@ -235,7 +238,7 @@ export const AccountBox: FunctionComponent<{
                   >
                     {name}
                   </Text>
-                  {!selected.meta?.email ? (
+                  {!selected?.meta?.email ? (
                     <TouchableOpacity
                       onPress={() => {
                         setPasswordLock(null);
@@ -248,7 +251,7 @@ export const AccountBox: FunctionComponent<{
                     </TouchableOpacity>
                   ) : (
                     <Text color={colors['text-place-holder']}>
-                      {selected.meta?.email}
+                      {selected?.meta?.email}
                     </Text>
                   )}
                 </View>
@@ -329,15 +332,24 @@ export const AccountBox: FunctionComponent<{
             }
             if (isShowModalPass && !passwordLock) {
               try {
-                const privateKeyData = await keyRingStore.connectGoogleWallet(
-                  parseInt(coinType),
+                const privateKeyData = await keyRingStore.showKeyRing(
+                  index,
                   password
                 );
-                if (privateKeyData) {
+                console.log('privateKeyData: ', privateKeyData);
+
+                if (isPrivateKey(privateKeyData)) {
                   setPasswordLock(password);
+                  setPrivateKeyExternal(privateKeyData);
                   login();
                 } else {
                   setPasswordLock(null);
+                  showToast({
+                    text1: 'Info',
+                    text2:
+                      'The system only supports linking with Google accounts for wallets imported with a private key.'
+                  });
+                  return;
                 }
               } catch (error) {
                 console.log('error: ', error);
