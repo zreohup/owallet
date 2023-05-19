@@ -7,14 +7,7 @@ import { RegisterConfig } from '@owallet/hooks';
 import { useSmartNavigation } from '../../../navigation.provider';
 import { Controller, useForm } from 'react-hook-form';
 import { TextInput } from '../../../components/input';
-import {
-  Image,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View
-} from 'react-native';
-import { Button } from '../../../components/button';
+import { Platform, StyleSheet, View } from 'react-native';
 import Clipboard from 'expo-clipboard';
 import { useStore } from '../../../stores';
 import { BIP44AdvancedButton, useBIP44Option } from '../bip44';
@@ -22,7 +15,6 @@ import { Buffer } from 'buffer';
 import { checkRouter, navigate } from '../../../router/root';
 import { OWalletLogo } from '../owallet-logo';
 import { spacing, typography } from '../../../themes';
-import { LoadingSpinner } from '../../../components/spinner';
 import OWButton from '../../../components/button/OWButton';
 import OWIcon from '../../../components/ow-icon/ow-icon';
 import { SCREENS } from '@src/common/constants';
@@ -470,23 +462,16 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
       if (requiredShares <= 0) {
         console.log('requiredShares: ', requiredShares);
         const reconstructedKey = await tKey.reconstructKey();
-        // loadingScreen.setIsLoading(false);
+        const shareStore = await tKey.generateNewShare();
+        await (tKey.modules.reactNativeStorage as any).storeDeviceShare(
+          shareStore.newShareStores[shareStore.newShareIndex.toString('hex')]
+        );
         return reconstructedKey?.privKey.toString('hex');
       }
-      const shareStore = await tKey.generateNewShare();
-      await (tKey.modules.reactNativeStorage as any).storeDeviceShare(
-        shareStore.newShareStores[shareStore.newShareIndex.toString('hex')]
-      );
-      console.log('shareStore: ', shareStore);
-
       return null;
-      // setRecoveryVisible(false);
     } catch (error) {
-      // loadingScreen.setIsLoading(false);
-
       setIsCreating(false);
       return Promise.reject(error);
-      // console.log('🚀 ~ file: index.tsx:193 ~ recoverShare ~ error:', error);
     }
   };
 

@@ -10,7 +10,6 @@ import { SCREENS } from '@src/common/constants';
 import { useStore } from '@src/stores';
 import { useRegisterConfig } from '@owallet/hooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API } from '@src/common/api';
 import { AppInit } from '@src/stores/app_init';
 
 type GenericObject = {
@@ -282,8 +281,6 @@ export const useLoginSocial = (addressAcc?: string) => {
           `${loginResponse['userInfo']?.email}_share`,
           JSON.stringify(deviceShare)
         );
-        console.log('deviceShare: ', deviceShare);
-        console.log('test email', `${loginResponse['userInfo']?.email}_share`);
       } catch (error) {
         console.log('🚀 ~ file: index.tsx:154 ~ initialize ~ error:', error);
         loadingScreen.setIsLoading(false);
@@ -301,22 +298,7 @@ export const useLoginSocial = (addressAcc?: string) => {
       console.log('🚀 ~ file: index.tsx:345 ~ handleData ~ error:', error);
     }
   };
-  const onUnSubscribeToTopic = React.useCallback(async () => {
-    const fcmToken = await AsyncStorage.getItem('FCM_TOKEN');
 
-    if (fcmToken) {
-      const unsubcriber = await API.unsubcribeTopic(
-        {
-          subcriber: fcmToken,
-          topic: addressAcc
-        },
-        {
-          baseURL: 'https://tracking-tx.orai.io'
-        }
-      );
-      console.log('un-subcriber ===', unsubcriber);
-    }
-  }, []);
   const index = keyRingStore.multiKeyStoreInfo.findIndex(
     (keyStore) => keyStore.selected
   );
@@ -398,16 +380,6 @@ export const useLoginSocial = (addressAcc?: string) => {
       );
 
       return Promise.reject(error);
-    }
-  };
-
-  const createPrivateKey = async (privateKey, meta, password, name) => {
-    try {
-      await registerConfig.createPrivateKey(name, privateKey, password, {
-        ...meta
-      });
-    } catch (error) {
-      console.log('error: ', error);
     }
   };
 
