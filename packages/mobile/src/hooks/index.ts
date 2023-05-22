@@ -4,3 +4,4 @@ export * from './use-unmount';
 export * from './use-previous';
 export * from './use-header';
 export * from './use-height-header';
+export * from './use-keyboard';

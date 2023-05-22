@@ -18,6 +18,7 @@ import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { useStore } from '../../stores';
 import { useTheme } from '@src/themes/theme-provider';
 import OWButtonGroup from '@src/components/button/OWButtonGroup';
+import { useKeyboard } from '@src/hooks';
 
 export const PasswordInputModal: FunctionComponent<{
   isOpen: boolean;
@@ -29,7 +30,7 @@ export const PasswordInputModal: FunctionComponent<{
   textButtonRight?: string;
   buttonRightStyle?: TextStyle;
   disabled?: boolean;
-  paragraphInput?:any;
+  paragraphInput?: any;
   /**
    * If any error thrown in the `onEnterPassword`, the password considered as invalid password.
    * @param password
@@ -68,8 +69,9 @@ export const PasswordInputModal: FunctionComponent<{
         setIsLoading(false);
       }
     };
+
     const keyboardVerticalOffset =
-      Platform.OS === 'ios' ? metrics.screenHeight / 2.1 : 0;
+      Platform.OS === 'ios' ? metrics.screenHeight / 2 : 0;
 
     return (
       <KeyboardAvoidingView

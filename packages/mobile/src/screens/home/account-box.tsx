@@ -318,7 +318,7 @@ export const AccountBox: FunctionComponent<{
           }
           title={
             isShowModalPass && !passwordLock
-              ? 'Enter your wallet unlock password'
+              ? 'Enter your password to unlock wallet'
               : 'Create a new security password for the Google account'
           }
           onEnterPassword={async (password) => {
