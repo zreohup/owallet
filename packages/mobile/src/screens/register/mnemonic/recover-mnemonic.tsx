@@ -283,11 +283,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
     }
   };
   const onGoBack = () => {
-    if (checkRouter(props?.route?.name, 'RegisterRecoverMnemonicMain')) {
-      smartNavigation.goBack();
-    } else {
-      smartNavigation.navigateSmart('Register.Intro', {});
-    }
+    smartNavigation.goBack();
   };
   const validateMnemonic = (value: string) => {
     value = trimWordsStr(value);

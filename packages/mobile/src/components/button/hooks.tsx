@@ -16,7 +16,8 @@ const useSize = ({ size }): IMapStyle => {
         },
         text: {
           fontSize: 14,
-          fontWeight: '700'
+          fontWeight: '500',
+          fontFamily: 'DMSans-Medium'
         }
       };
       break;
@@ -28,7 +29,8 @@ const useSize = ({ size }): IMapStyle => {
         },
         text: {
           fontSize: 14,
-          fontWeight: '400'
+          fontWeight: '400',
+          fontFamily: 'DMSans-Regular'
         }
       };
       break;
@@ -40,7 +42,8 @@ const useSize = ({ size }): IMapStyle => {
         },
         text: {
           fontSize: 16,
-          fontWeight: '700'
+          fontWeight: '500',
+          fontFamily: 'DMSans-Medium'
         }
       };
       break;
@@ -52,7 +55,8 @@ const useSize = ({ size }): IMapStyle => {
         },
         text: {
           fontSize: 16,
-          fontWeight: '700'
+          fontWeight: '500',
+          fontFamily: 'DMSans-Medium'
         }
       };
       break;
@@ -82,7 +86,8 @@ export const useMapStyles = ({
         text: {
           color: disabled ? colors['text-btn-disable-danger'] : colors['white'],
           fontSize: formatSize.text.fontSize,
-          fontWeight: formatSize.text.fontWeight
+          fontWeight: formatSize.text.fontWeight,
+          fontFamily: formatSize.text.fontFamily
         }
       };
       break;
@@ -98,7 +103,8 @@ export const useMapStyles = ({
         text: {
           color: disabled ? colors['text-btn-disable-color'] : colors['white'],
           fontSize: formatSize.text.fontSize,
-          fontWeight: formatSize.text.fontWeight
+          fontWeight: formatSize.text.fontWeight,
+          fontFamily: formatSize.text.fontFamily
         }
       };
       break;
@@ -110,15 +116,16 @@ export const useMapStyles = ({
           backgroundColor: disabled
             ? colors['btn-disable-background']
             : 'transparent',
-            borderColor:colors['purple-700'],
-            borderWidth:0.5
+          borderColor: colors['purple-700'],
+          borderWidth: 0.5
         },
         text: {
           color: disabled
             ? colors['text-btn-disable-color']
             : colors['purple-700'],
           fontSize: formatSize.text.fontSize,
-          fontWeight: formatSize.text.fontWeight
+          fontWeight: formatSize.text.fontWeight,
+          fontFamily: formatSize.text.fontFamily
         }
       };
       break;
@@ -134,7 +141,8 @@ export const useMapStyles = ({
             ? colors['text-btn-disable-color']
             : colors['btn-primary-background'],
           fontSize: formatSize.text.fontSize,
-          fontWeight: formatSize.text.fontWeight
+          fontWeight: formatSize.text.fontWeight,
+          fontFamily: formatSize.text.fontFamily
         }
       };
       break;
@@ -151,7 +159,8 @@ export const useMapStyles = ({
         text: {
           color: disabled ? colors['text-btn-disable-color'] : colors['white'],
           fontSize: formatSize.text.fontSize,
-          fontWeight: formatSize.text.fontWeight
+          fontWeight: formatSize.text.fontWeight,
+          fontFamily: formatSize.text.fontFamily
         }
       };
       break;

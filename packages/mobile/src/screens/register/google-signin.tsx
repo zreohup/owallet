@@ -299,9 +299,6 @@ export const useLoginSocial = (addressAcc?: string) => {
     }
   };
 
-  const index = keyRingStore.multiKeyStoreInfo.findIndex(
-    (keyStore) => keyStore.selected
-  );
   const reconstructKey = async () => {
     const { requiredShares, shareDescriptions } = tKey.getKeyDetails();
 
@@ -353,7 +350,14 @@ export const useLoginSocial = (addressAcc?: string) => {
             };
             await generateNewShareWithPassword(passwordLock);
             setIsShowModalPass(false);
+            const index = keyRingStore.multiKeyStoreInfo.findIndex(
+              (keyStore) => keyStore.selected
+            );
+            console.log('index: ', index);
+            console.log('metaData: ', metaData);
+
             await keyRingStore.updateMetaKeyRing(index, metaData);
+
             loadingScreen.setIsLoading(false);
             return;
           } catch (error) {

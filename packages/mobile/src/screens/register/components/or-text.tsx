@@ -7,11 +7,11 @@ const OrText = () => {
   const { colors } = useTheme();
   return (
     <Text
-      typo="bold"
-      color={colors['icon-purple-700-gray']}
+      weight="500"
+      color={colors['text-place-holder']}
       style={{
         textAlign: 'center',
-        paddingVertical:16
+        paddingVertical: 16
       }}
       variant="body1"
     >

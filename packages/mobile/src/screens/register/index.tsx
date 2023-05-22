@@ -10,8 +10,12 @@ import { useSmartNavigation } from '../../navigation.provider';
 import { useStore } from '../../stores';
 import { metrics } from '../../themes';
 import { OWalletLogo, OWalletUnion } from './owallet-logo';
-import { HeaderWelcome } from './components';
+import { HeaderWelcome, OrText } from './components';
 import { SCREENS } from '@src/common/constants';
+import WebviewSocialLogin, { useLoginSocial } from './google-signin';
+import { AppInit } from '@src/stores/app_init';
+import images from '@src/assets/images';
+import OWIcon from '@src/components/ow-icon/ow-icon';
 
 export const RegisterIntroScreen: FunctionComponent = observer(() => {
   const { keyRingStore, analyticsStore } = useStore();
@@ -33,33 +37,52 @@ export const RegisterIntroScreen: FunctionComponent = observer(() => {
     });
   };
   const handleCreateANewWallet = () => {
-    
     smartNavigation.navigate(SCREENS.CreateANewWallet);
   };
+  const tKey = AppInit.tKey;
   const styles = useStyles();
-
+  const { login, loginResponse, setInterpolateResult } = useLoginSocial();
   return (
     <PageWithScrollView
       backgroundColor={colors['plain-background']}
       style={[styles.container]}
     >
-      <HeaderWelcome title={'Welcome to OWallet'} />
+      <HeaderWelcome
+        style={{
+          marginTop: 0
+        }}
+        title={'Welcome to OWallet'}
+      />
       <OWButton
         style={styles.btnOW}
         label="Create a new wallet"
         onPress={handleCreateANewWallet}
       />
       <OWButton
-        style={styles.btnOW}
+        // style={styles.btnOW}
         label="Import Ledger Nano X"
         onPress={handleImportLedgerNanoX}
         type="secondary"
+        
       />
+
+      <OrText />
       <OWButton
         style={styles.btnOW}
         label="Import from Mnemonic / Private key"
         onPress={handleImportFromMnemonic}
         type="secondary"
+      />
+      <OWButton
+        onPress={login}
+        disabled={!!tKey ? false : true}
+        type="secondary"
+        icon={<OWIcon type="images" source={images.google} size={24} />}
+        label="Sign in with Google"
+      />
+      <WebviewSocialLogin
+        loginResponse={loginResponse}
+        handleInterpolateResult={(result) => setInterpolateResult(result)}
       />
     </PageWithScrollView>
   );
