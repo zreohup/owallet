@@ -58,7 +58,7 @@ export const colorsCode = {
   'text-primary': '#4334F1',
   'border-white': '#F5F5F5',
   'border-pink': '#D7C4F5',
-  white: '#fff',
+  white: '#ffffff',
   black: '#000',
   disabled: '#EEEEF3',
   divider: '#F5F5F5',
@@ -198,7 +198,9 @@ const modeColors = {
   'bg-icon-token': ['#E5E5EA', '#F3F1F5'],
   'bg-circle-select-modal': [colorsCode['gray-400'], colorsCode['purple-100']],
   'divided-border-transaction-detail': ['#2B2D3B', '#EDEDF8'],
-  skeleton: ['#36384a', '#f3f2f2']
+  skeleton: ['#36384a', '#f3f2f2'],
+  'border-btn-social':['#808096','#808096'],
+  'text-btn-social':[colorsCode['white'],'#717177']
 };
 const typeColorsTheme = () => modeColors;
 type TypeTheme = { [P in keyof ReturnType<typeof typeColorsTheme>]: string };

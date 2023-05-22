@@ -36,12 +36,20 @@ export const RegisterIntroScreen: FunctionComponent = observer(() => {
       registerConfig
     });
   };
-  const handleCreateANewWallet = () => {
-    smartNavigation.navigate(SCREENS.CreateANewWallet);
-  };
+  // const handleCreateANewWallet = () => {
+  //   smartNavigation.navigate(SCREENS.CreateANewWallet);
+  // };
   const tKey = AppInit.tKey;
   const styles = useStyles();
   const { login, loginResponse, setInterpolateResult } = useLoginSocial();
+  const handleCreateANewMnemonic = () => {
+    analyticsStore.logEvent('Create account started', {
+      registerType: 'seed'
+    });
+    smartNavigation.navigate(SCREENS.RegisterNewMnemonic, {
+      registerConfig
+    });
+  };
   return (
     <PageWithScrollView
       backgroundColor={colors['plain-background']}
@@ -55,8 +63,8 @@ export const RegisterIntroScreen: FunctionComponent = observer(() => {
       />
       <OWButton
         style={styles.btnOW}
-        label="Create a new wallet"
-        onPress={handleCreateANewWallet}
+        label="Create new mnemonic"
+        onPress={handleCreateANewMnemonic}
       />
       <OWButton
         // style={styles.btnOW}
@@ -69,12 +77,18 @@ export const RegisterIntroScreen: FunctionComponent = observer(() => {
       <OrText />
       <OWButton
         style={styles.btnOW}
-        label="Import from Mnemonic / Private key"
+        label="Import an existing wallet"
         onPress={handleImportFromMnemonic}
         type="secondary"
       />
       <OWButton
         onPress={login}
+        style={{
+          borderColor:colors['border-btn-social']
+        }}
+        textStyle={{
+          color:colors['text-btn-social']
+        }}
         disabled={!!tKey ? false : true}
         type="secondary"
         icon={<OWIcon type="images" source={images.google} size={24} />}

@@ -51,6 +51,13 @@ const CreateANewWalletScreen = () => {
         type="secondary"
         icon={<OWIcon type="images" source={images.google} size={24} />}
         label="Sign in with Google"
+        style={{
+          borderColor:colors['border-btn-social']
+        }}
+        textStyle={{
+          color:colors['text-btn-social']
+        }}
+        
       />
       <WebviewSocialLogin
         loginResponse={loginResponse}

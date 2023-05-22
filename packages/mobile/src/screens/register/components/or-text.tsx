@@ -7,7 +7,7 @@ const OrText = () => {
   const { colors } = useTheme();
   return (
     <Text
-      weight="500"
+      typo='medium'
       color={colors['text-place-holder']}
       style={{
         textAlign: 'center',
