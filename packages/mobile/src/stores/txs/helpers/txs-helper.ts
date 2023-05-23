@@ -469,6 +469,7 @@ export class TxsHelper {
     return words.join('_').toLowerCase();
   };
   convertTypeEvent = (actionValue) => {
+    console.log('actionValue: ', actionValue);
     return actionValue?.length > 0 &&
       actionValue?.toLowerCase()?.includes('msg')
       ? this.getStringAfterMsg(this.addSpacesToString(actionValue))
