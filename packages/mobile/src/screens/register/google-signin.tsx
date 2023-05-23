@@ -17,7 +17,7 @@ type GenericObject = {
 };
 
 const CLIENT_ID =
-  '349137538811-8t7s7584app6am5j09a2kglo8dg39eqn.apps.googleusercontent.com';
+  '570000248707-s57pvjgtppfb66vdhcqee5uln59fmd2n.apps.googleusercontent.com';
 const WebviewSocialLogin = ({ loginResponse, handleInterpolateResult }) => {
   const loadingScreen = useLoadingScreen();
   const [keyWebview, setKeyWebview] = useState(1);
@@ -143,7 +143,7 @@ export const useLoginSocial = (addressAcc?: string) => {
       finalUrl.searchParams.append('prompt', 'consent select_account');
       finalUrl.searchParams.append(
         'redirect_uri',
-        'https://orai-oauth.web.app/google.html'
+        'https://owallet-829a1.web.app/'
       );
 
       const result = await WebBrowser.openAuthSessionAsync(
@@ -186,7 +186,7 @@ export const useLoginSocial = (addressAcc?: string) => {
         tKey.serviceProvider as any
       ).triggerLoginMobile({
         typeOfLogin: 'google',
-        verifier: 'tkey-google',
+        verifier: 'owallet-google',
         clientId: CLIENT_ID,
         hash,
         queryParameters
