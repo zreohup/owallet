@@ -50,7 +50,7 @@ export const OnboardingIntroScreen: FunctionComponent = observer(() => {
   const styles = styling();
   return (
     <PageWithScrollView backgroundColor="white">
-      <View style={[{ ...styles.onBoardingRoot }, { paddingTop: 50 }]}>
+      <View testID='welcome_id' style={[{ ...styles.onBoardingRoot }, { paddingTop: 50 }]}>
         <AppIntroSlider
           renderItem={renderItem}
           data={slides}

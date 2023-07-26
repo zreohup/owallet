@@ -58,6 +58,7 @@ const GatewayIntroScreen: FunctionComponent = () => {
         style={styles.img}
       />
       <OWButton
+        testID="get_started_id"
         label="Get started!"
         onPress={onGetStarted}
         disabled={isTimedOut}

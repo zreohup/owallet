@@ -195,6 +195,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   const renderMnemonic = ({ field: { onChange, onBlur, value, ref } }) => {
     return (
       <TextInput
+      testID='input_mnemonic'
         label="Mnemonic / Private key"
         returnKeyType="next"
         multiline={true}
@@ -237,6 +238,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
     return (
       <TextInput
         label="Username"
+        testID='user_name'
         returnKeyType={mode === 'add' ? 'done' : 'next'}
         onSubmitEditing={() => {
           if (mode === 'add') {
@@ -265,6 +267,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   const renderPass = ({ field: { onChange, onBlur, value, ref } }) => {
     return (
       <TextInput
+        testID='new_pass_ID'
         label="New password"
         returnKeyType="next"
         secureTextEntry={true}
@@ -309,6 +312,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
   const renderConfirmPass = ({ field: { onChange, onBlur, value, ref } }) => {
     return (
       <TextInput
+        testID='confirm_pass_ID'
         label="Confirm password"
         returnKeyType="done"
         onSubmitEditing={() => {
@@ -398,6 +402,7 @@ export const RecoverMnemonicScreen: FunctionComponent = observer((props) => {
 
       <BIP44AdvancedButton bip44Option={bip44Option} />
       <OWButton
+        testID='next_recover'
         loading={isCreating}
         disabled={isCreating}
         onPress={submit}

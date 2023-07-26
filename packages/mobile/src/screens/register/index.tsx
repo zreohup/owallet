@@ -68,13 +68,13 @@ export const RegisterIntroScreen: FunctionComponent = observer(() => {
         type="secondary"
       />
       <OWButton
+      testID="import_wallet"
         style={styles.btnOW}
         label="Import from Mnemonic / Private key"
         onPress={handleImportFromMnemonic}
         type="secondary"
       />
     </PageWithScrollView>
-    
   );
 });
 

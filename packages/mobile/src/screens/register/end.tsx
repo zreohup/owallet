@@ -120,6 +120,7 @@ export const RegisterEndScreen: FunctionComponent = observer(() => {
         </View>
       ) : null}
       <OWButton
+        testID='done_owallet'
         label="Done"
         loading={isLoading}
         style={styles.btnDone}
