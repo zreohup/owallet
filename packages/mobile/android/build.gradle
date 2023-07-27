@@ -11,6 +11,7 @@ buildscript {
         ndkVersion = '23.1.7779620'
         androidXBrowser = '1.3.0'
         androidXAnnotation = '1.2.0'
+        kotlinVersion = '1.8.22'
     }
     repositories {
         google()
@@ -21,6 +22,7 @@ buildscript {
         classpath 'com.google.gms:google-services:4.3.15'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.2'
         classpath('com.facebook.react:react-native-gradle-plugin')
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion") // (3)
     }
 }
 subprojects { subproject ->
@@ -28,9 +30,22 @@ subprojects { subproject ->
         project.configurations { compile { } }
         }
 }
+
 allprojects {
+     afterEvaluate {
+        if (it.hasProperty('android')){
+            android {
+                defaultConfig {
+                    minSdkVersion 21 // Replace '21' with whatever suites your case
+                }
+            }
+        }
+    }
     repositories {
         maven { url 'https://www.jitpack.io' }
         maven { url 'https://maven.google.com' }
+        maven { // (4)
+            url("$rootDir/../node_modules/detox/Detox-android")
+        }
     }
 }
