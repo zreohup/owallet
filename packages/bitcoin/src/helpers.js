@@ -9,10 +9,14 @@ const bip21 = require('bip21');
 const Url = require('url-parse');
 const { networks, availableCoins, defaultWalletShape, getCoinData } = require('./networks');
 const { getTransaction } = require('./electrum');
+import * as ecc from 'tiny-secp256k1';
+import ECPairFactory from 'ecpair';
 
 /*
 This batch sends addresses and returns the balance of utxos from them
  */
+
+const ECPair = ECPairFactory(ecc);
 const getBalanceFromUtxos = async ({ addresses = [], changeAddresses = [], selectedCrypto } = {}) => {
   try {
     const result = await walletHelpers.utxos.default({
@@ -378,88 +382,7 @@ const createMsg = ({ address, amount, totalFee, changeAddress, confirmedBalance,
   }
   return targets;
 };
-const signAndCreateTransaction = async ({ selectedCrypto, mnemonic, utxos, blacklistedUtxos, targets }) => {
-  try {
-    const network = networks[selectedCrypto];
-    const seed = bip39.mnemonicToSeedSync(mnemonic);
-    const root = bip32.fromSeed(seed, network);
-    const psbt = new bitcoin.Psbt({ network });
 
-    //Add Inputs
-    const utxosLength = utxos.length;
-    for (let i = 0; i < utxosLength; i++) {
-      try {
-        const utxo = utxos[i];
-        if (blacklistedUtxos.includes(utxo.tx_hash)) continue;
-        const path = utxo.path;
-        const keyPair = root.derivePath(path);
-
-        const p2wpkh = bitcoin.payments.p2wpkh({
-          pubkey: keyPair.publicKey,
-          network
-        });
-        psbt.addInput({
-          hash: utxo.txid,
-          index: utxo.vout,
-          witnessUtxo: {
-            script: p2wpkh.output,
-            value: utxo.value
-          }
-        });
-      } catch (e) {
-        console.log(e);
-      }
-    }
-
-    //Shuffle and add outputs.
-    try {
-      targets = shuffleArray(targets);
-    } catch (e) {}
-
-    targets.forEach((target) => {
-      //Check if OP_RETURN
-      let isOpReturn = false;
-      try {
-        isOpReturn = !!target.script;
-      } catch (e) {}
-      if (isOpReturn) {
-        psbt.addOutput({
-          script: target.script,
-          value: target.value
-        });
-      } else {
-        psbt.addOutput({
-          address: target.address,
-          value: target.value
-        });
-      }
-    });
-
-    //Loop through and sign
-    let index = 0;
-    for (let i = 0; i < utxosLength; i++) {
-      try {
-        const utxo = utxos[i];
-        if (blacklistedUtxos.includes(utxo.tx_hash)) continue;
-        const path = utxo.path;
-        const keyPair = root.derivePath(path);
-        psbt.signInput(index, keyPair);
-        index++;
-      } catch (e) {
-        console.log(e);
-      }
-    }
-    psbt.finalizeAllInputs();
-    const rawTx = psbt.extractTransaction(true).toHex();
-    const data = { error: false, data: rawTx };
-
-    return data;
-  } catch (e) {
-    console.log('🚀 ~ file: helpers.js:501 ~ e:', e);
-
-    return { error: true, data: e };
-  }
-};
 //amount = Amount to send to recipient.
 //transactionFee = fee per byte.
 const createTransaction = async ({
@@ -470,7 +393,7 @@ const createTransaction = async ({
   utxos = [],
   blacklistedUtxos = [],
   changeAddress = '',
-  mnemonic,
+  keyPair,
   selectedCrypto = 'bitcoin',
   message = '',
   addressType = 'bech32'
@@ -512,8 +435,8 @@ const createTransaction = async ({
       targets.push({ script: embed.output, value: 0 });
     }
 
-    const seed = bip39.mnemonicToSeedSync(mnemonic);
-    const root = bip32.fromSeed(seed, network);
+    // const seed = bip39.mnemonicToSeedSync(mnemonic);
+    // const root = bip32.fromSeed(seed, network);
     const psbt = new bitcoin.Psbt({ network });
 
     //Add Inputs
@@ -522,8 +445,8 @@ const createTransaction = async ({
       try {
         const utxo = utxos[i];
         if (blacklistedUtxos.includes(utxo.tx_hash)) continue;
-        const path = utxo.path;
-        const keyPair = root.derivePath(path);
+        // const path = utxo.path;
+        // const keyPair = root.derivePath(path);
 
         if (addressType === 'bech32') {
           const p2wpkh = bitcoin.payments.p2wpkh({
@@ -562,7 +485,7 @@ const createTransaction = async ({
             txHash: utxo.txid,
             coin: selectedCrypto
           });
-          
+
           const nonWitnessUtxo = Buffer.from(transaction.data.hex, 'hex');
           psbt.addInput({
             hash: utxo.txid,
@@ -605,8 +528,8 @@ const createTransaction = async ({
       try {
         const utxo = utxos[i];
         if (blacklistedUtxos.includes(utxo.tx_hash)) continue;
-        const path = utxo.path;
-        const keyPair = root.derivePath(path);
+        // const path = utxo.path;
+        // const keyPair = root.derivePath(path);
         psbt.signInput(index, keyPair);
         index++;
       } catch (e) {
@@ -651,8 +574,14 @@ const fetchData = (type, params) => {
 const getCoinNetwork = (coin = '') => {
   return networks[coin];
 };
-
-const getKeyPair = ({ selectedCrypto = 'bitcoin', keyDerivationPath = '84', addressIndex = 0, mnemonic }) => {
+const getKeyPairByPrivateKey = ({ selectedCrypto = 'bitcoin', privateKey }) => {
+  if (!privateKey) throw Error('Private Key is not Empty');
+  const network = networks[selectedCrypto]; //Returns the network object based on the selected crypto.
+  const keyPair = ECPair.fromPrivateKey(privateKey, { network: network });
+  console.log('🚀 ~ file: helpers.js:582 ~ getKeyPairByPrivateKey ~ keyPair:', keyPair);
+  return keyPair;
+};
+const getKeyPairByMnemonic = ({ selectedCrypto = 'bitcoin', keyDerivationPath = '84', addressIndex = 0, mnemonic }) => {
   const coinTypePath = defaultWalletShape.coinTypePath[selectedCrypto];
   const network = networks[selectedCrypto]; //Returns the network object based on the selected crypto.
 
@@ -1260,7 +1189,8 @@ module.exports = {
   getCoinNetwork,
   generateAddresses,
   getAddress,
-  getKeyPair,
+  getKeyPairByMnemonic,
+  getKeyPairByPrivateKey,
   parseFiat,
   getNetworkType,
   capitalize,
@@ -1293,7 +1223,6 @@ module.exports = {
   getBalanceValue,
   calculatorFee,
   createMsg,
-  signAndCreateTransaction,
   BtcToSats,
   convertStringToMessage,
   btcToFiat
