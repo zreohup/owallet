@@ -681,6 +681,47 @@ export const EmbedChainInfos: AppChainInfo[] = [
       accountUrl: 'https://live.blockcypher.com/btc-testnet/address/{address}'
     }
   },
+  {
+    rest: 'https://api.blockcypher.com/v1/btc/main',
+    chainId: 'bitcoin',
+    chainName: 'Bitcoin-Segwit',
+    bip44: {
+      coinType: 1
+    },
+    coinType: 1,
+    stakeCurrency: {
+      coinDenom: 'BTC',
+      coinMinimalDenom: 'btc',
+      coinDecimals: 8,
+      coinGeckoId: 'bitcoin',
+      coinImageUrl: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
+      gasPriceStep: {
+        low: 1,
+        average: 15,
+        high: 22
+      }
+    },
+    bech32Config: Bech32Address.defaultBech32Config('bc'),
+    networkType: 'bitcoin',
+    currencies: [
+      {
+        coinDenom: 'BTC',
+        coinMinimalDenom: 'btc',
+        coinDecimals: 8,
+        coinGeckoId: 'bitcoin',
+        coinImageUrl: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png'
+      }
+    ],
+    get feeCurrencies() {
+      return this.currencies;
+    },
+    features: ['isBtc'],
+    txExplorer: {
+      name: 'Blockcypher',
+      txUrl: 'https://live.blockcypher.com/btc/tx/{txHash}',
+      accountUrl: 'https://live.blockcypher.com/btc/address/{address}'
+    }
+  },
   // {
   //   rest: 'https://api.blockcypher.com/v1/btc/main',
   //   chainId: 'bitcoin',
