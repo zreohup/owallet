@@ -3,7 +3,7 @@ import { TxChainSetter } from './chain';
 import { ChainGetter, CoinPrimitive, ObservableQueryBitcoinBalance, ObservableQueryEvmBalance } from '@owallet/stores';
 import { action, computed, makeObservable, observable } from 'mobx';
 import { Coin, CoinPretty, Dec, DecUtils, Int } from '@owallet/unit';
-import { AddressBtcType, Currency } from '@owallet/types';
+import { Currency } from '@owallet/types';
 import { computedFn } from 'mobx-utils';
 import { StdFee } from '@cosmjs/launchpad';
 import { useState } from 'react';
@@ -22,8 +22,6 @@ export class FeeConfig extends TxChainSetter implements IFeeConfig {
 
   @observable
   protected _sender: string;
-  @observable
-  protected _addressType: AddressBtcType;
 
   @observable
   protected _senderEvm?: string;
@@ -58,14 +56,12 @@ export class FeeConfig extends TxChainSetter implements IFeeConfig {
     queryEvmBalances?: ObservableQueryEvmBalance,
     senderEvm?: string,
     queryBtcBalances?: ObservableQueryBitcoinBalance,
-    protected readonly memoConfig?: IMemoConfig,
-    addressType: AddressBtcType = AddressBtcType.Bech32
+    protected readonly memoConfig?: IMemoConfig
   ) {
     super(chainGetter, initialChainId);
 
     this._sender = sender;
     this._senderEvm = senderEvm;
-    this._addressType = addressType;
     this.queryBalances = queryBalances;
     this.queryEvmBalances = queryEvmBalances;
     this.additionAmountToNeedFee = additionAmountToNeedFee;
@@ -195,7 +191,7 @@ export class FeeConfig extends TxChainSetter implements IFeeConfig {
           utxos: utxos,
           message: this.memoConfig.memo,
           transactionFee: gasPriceStep[feeType] as number,
-          addressType: this._addressType
+          addressType: 'bech32'
         });
         // const feeAmount = gasPrice.mul(new Dec(Number(amount)));
         return {
@@ -320,8 +316,7 @@ export const useFeeConfig = (
   queryEvmBalances?: ObservableQueryEvmBalance,
   senderEvm?: string,
   queryBtcBalances?: ObservableQueryBitcoinBalance,
-  memoConfig?: IMemoConfig,
-  addressType?: AddressBtcType
+  memoConfig?: IMemoConfig
 ) => {
   const [config] = useState(
     () =>
@@ -336,8 +331,7 @@ export const useFeeConfig = (
         queryEvmBalances,
         senderEvm,
         queryBtcBalances,
-        memoConfig,
-        addressType
+        memoConfig
       )
   );
   config.setChain(chainId);

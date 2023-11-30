@@ -50,7 +50,7 @@ export const NetworkModal = ({ profileColor }) => {
                   await keyRingStore.setKeyStoreLedgerAddress(
                     `${
                       chainStore.current.networkType === 'bitcoin'
-                        ? getKeyDerivationFromAddressType(account.addressType)
+                        ? getKeyDerivationFromAddressType(account.addressTypeBtc)
                         : '44'
                     }'/${item.bip44.coinType ?? item.coinType}'/${bip44Option.bip44HDPath.account}'/${
                       bip44Option.bip44HDPath.change

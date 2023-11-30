@@ -111,7 +111,7 @@ export const BIP44SelectModal: FunctionComponent<{
             }}
           >{`m/${
             chainStore.current.networkType === 'bitcoin'
-              ? getKeyDerivationFromAddressType(accountInfo.addressType)
+              ? getKeyDerivationFromAddressType(accountInfo.addressTypeBtc)
               : '44'
           }’/`}</Text>
           <TextInput

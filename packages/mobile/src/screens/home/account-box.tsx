@@ -103,6 +103,7 @@ export const AccountBox: FunctionComponent<{
     }
   ];
   const onPressRadioButton = (type: AddressBtcType) => {
+    console.log('🚀 ~ file: account-box.tsx:106 ~ onPressRadioButton ~ type:', type);
     account.setAddressTypeBtc(type);
   };
   return (
@@ -196,7 +197,7 @@ export const AccountBox: FunctionComponent<{
               layout={'row'}
               radioButtons={radioButtons}
               onPress={onPressRadioButton}
-              selectedId={account.addressType}
+              selectedId={account.addressTypeBtc}
             />
           </View>
         )}

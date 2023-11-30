@@ -4,7 +4,6 @@ import Axios, { AxiosInstance } from 'axios';
 import { override } from 'mobx';
 import { ChainGetter } from '../common';
 import { HasMapStore } from '../common';
-import { AddressBtcType } from '@owallet/types';
 
 export class ObservableChainQuery<T = unknown, E = unknown> extends ObservableQuery<T, E> {
   // Chain Id should not be changed after creation.
@@ -56,7 +55,7 @@ export class ObservableChainQueryMap<T = unknown, E = unknown> extends HasMapSto
     protected readonly kvStore: KVStore,
     protected readonly chainId: string,
     protected readonly chainGetter: ChainGetter,
-    creater: (key: string, addressType?: AddressBtcType) => ObservableChainQuery<T, E>
+    creater: (key: string) => ObservableChainQuery<T, E>
   ) {
     super(creater);
   }
