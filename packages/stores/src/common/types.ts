@@ -1,4 +1,4 @@
-import { AddressBtcType, AppCurrency, ChainInfo } from '@owallet/types';
+import { AppCurrency, ChainInfo } from '@owallet/types';
 
 export interface ChainGetter {
   // Return the chain info matched with chain id.
@@ -9,7 +9,6 @@ export interface ChainGetter {
     addUnknownCurrencies(...coinMinimalDenoms: string[]): void;
     findCurrency(coinMinimalDenom: string): AppCurrency | undefined;
     forceFindCurrency(coinMinimalDenom: string): AppCurrency;
-    setAddressType(type: AddressBtcType): void;
   };
 }
 

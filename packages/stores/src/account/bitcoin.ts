@@ -74,7 +74,7 @@ export class BitcoinAccount {
   ): Promise<boolean> {
     if (signOptions.networkType === 'bitcoin') {
       const denomHelper = new DenomHelper(currency.coinMinimalDenom);
-      const { addressType } = this.chainGetter.getChain(this.chainId);
+
       switch (denomHelper.type) {
         case 'native':
           const msg: any = {
@@ -86,7 +86,7 @@ export class BitcoinAccount {
             selectedCrypto: signOptions.chainId,
             confirmedBalance: extraOptions.confirmedBalance,
             gasPriceStep: extraOptions.gasPriceStep,
-            addressType: addressType
+            addressType: this.base.addressType
           };
 
           await this.base.sendBtcMsgs(
