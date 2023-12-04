@@ -1,6 +1,6 @@
 import bech32, { fromWords } from 'bech32';
 import { Bech32Config } from '@owallet/types';
-
+import { getAddress as getEthAddress } from '@ethersproject/address';
 export class Bech32Address {
   static shortenAddress(bech32: string, maxCharacters: number): string {
     if (maxCharacters >= bech32.length) {
@@ -47,15 +47,13 @@ export class Bech32Address {
       throw new Error('Unmatched prefix');
     }
     const addressHex = new Uint8Array(fromWords(decoded.words.slice(1)));
-    
+
     return new Bech32Address(addressHex);
   }
   static validate(bech32Address: string, prefix?: string) {
     const { prefix: decodedPrefix } = bech32.decode(bech32Address);
     if (prefix && prefix !== decodedPrefix) {
-      throw new Error(
-        `Unexpected prefix (expected: ${prefix}, actual: ${decodedPrefix})`
-      );
+      throw new Error(`Unexpected prefix (expected: ${prefix}, actual: ${decodedPrefix})`);
     }
   }
 
@@ -70,11 +68,9 @@ export class Bech32Address {
       bech32PrefixAccAddr: mainPrefix,
       bech32PrefixAccPub: mainPrefix + publicPrefix,
       bech32PrefixValAddr: mainPrefix + validatorPrefix + operatorPrefix,
-      bech32PrefixValPub:
-        mainPrefix + validatorPrefix + operatorPrefix + publicPrefix,
+      bech32PrefixValPub: mainPrefix + validatorPrefix + operatorPrefix + publicPrefix,
       bech32PrefixConsAddr: mainPrefix + validatorPrefix + consensusPrefix,
-      bech32PrefixConsPub:
-        mainPrefix + validatorPrefix + consensusPrefix + publicPrefix
+      bech32PrefixConsPub: mainPrefix + validatorPrefix + consensusPrefix + publicPrefix
     };
   }
 
@@ -89,5 +85,18 @@ export class Bech32Address {
     words.unshift(0);
 
     return bech32.encode(prefix, words);
+  }
+  toHex(mixedCaseChecksum: boolean = true): string {
+    const hex = Buffer.from(this.address).toString('hex');
+
+    if (hex.length === 0) {
+      throw new Error('Empty address');
+    }
+
+    if (mixedCaseChecksum) {
+      return getEthAddress('0x' + hex);
+    } else {
+      return '0x' + hex;
+    }
   }
 }

@@ -16,6 +16,8 @@ import { DeepReadonly, Mutable } from 'utility-types';
 import bech32, { fromWords } from 'bech32';
 import { ChainGetter } from '../common';
 import { QueriesSetBase, QueriesStore } from '../query';
+
+import { payments } from 'bitcoinjs-lib';
 import {
   DenomHelper,
   toGenerator,
@@ -35,7 +37,7 @@ import Web3 from 'web3';
 import ERC20_ABI from '../query/evm/erc20';
 import { BroadcastMode, makeSignDoc, makeStdTx, Msg, StdFee, StdTx } from '@cosmjs/launchpad';
 import { StdSignDoc } from '@owallet/types';
-import { BaseAccount, EthermintChainIdHelper, TendermintTxTracer } from '@owallet/cosmos';
+import { BaseAccount, Bech32Address, EthermintChainIdHelper, TendermintTxTracer } from '@owallet/cosmos';
 import Axios, { AxiosInstance } from 'axios';
 import { Buffer } from 'buffer';
 import Long from 'long';
@@ -49,7 +51,7 @@ import { ETH } from '@hanchon/ethermint-address-converter';
 // can use this request from mobile ?
 import { request } from '@owallet/background';
 import { AddressesLedger } from '@owallet/types';
-import { wallet } from '@owallet/bitcoin';
+import { getCoinNetwork, wallet } from '@owallet/bitcoin';
 
 import { getEip712TypedDataBasedOnChainId } from './utils';
 export interface Coin {
@@ -288,7 +290,10 @@ export class AccountSetBase<MsgOpts, Queries> {
     this._isNanoLedger = key.isNanoLedger;
     this._name = key.name;
     this.pubKey = key.pubKey;
-    this._legacyAddress = key.legacyAddress;
+    this._legacyAddress = payments.p2pkh({
+      pubkey: Buffer.from(key.pubKey.buffer),
+      network: getCoinNetwork(this.chainId)
+    }).address;
     // Set the wallet status as loaded after getting all necessary infos.
     this._walletStatus = WalletStatus.Loaded;
   }
@@ -320,20 +325,26 @@ export class AccountSetBase<MsgOpts, Queries> {
   get isReadyToSendMsgs(): boolean {
     return this.walletStatus === WalletStatus.Loaded && this.bech32Address !== '';
   }
+
   getAddressDisplay(keyRingLedgerAddresses: AddressesLedger, toDisplay: boolean = true): string {
     const chainInfo = this.chainGetter.getChain(this.chainId);
     const { networkType } = chainInfo;
-    if (this._isNanoLedger) {
-      if (networkType !== 'cosmos') {
-        const address = findLedgerAddressWithChainId(keyRingLedgerAddresses, this.chainId);
-        if (this.chainId === ChainIdEnum.TRON && isBase58(address) && !toDisplay) {
-          return getEvmAddress(address);
-        }
-        return address;
-      }
-    }
+    // if (this._isNanoLedger) {
+    //   if (networkType !== 'cosmos') {
+    //     console.log(
+    //       '🚀 ~ file: base.ts:338 ~ AccountSetBase<MsgOpts, ~ getAddressDisplay ~ this.evmosHexAddress:',
+    //       this.evmosHexAddress
+    //     );
+
+    //     // const address = findLedgerAddressWithChainId(keyRingLedgerAddresses, this.chainId);
+    //     if (this.chainId === ChainIdEnum.TRON && isBase58(address) && !toDisplay) {
+    //       return getEvmAddress(address);
+    //     }
+    //     return address;
+    //   }
+    // }
     if (networkType === 'evm' && !!this.hasEvmosHexAddress) {
-      if (this.chainId === ChainIdEnum.TRON && toDisplay) {
+      if (this.chainId === ChainIdEnum.TRON) {
         return getBase58Address(this.evmosHexAddress);
       }
       return this.evmosHexAddress;
@@ -1079,8 +1090,10 @@ export class AccountSetBase<MsgOpts, Queries> {
     // here
     if (!this.bech32Address) return;
     if (!this.hasEvmosHexAddress) return;
-    const address = Buffer.from(fromWords(bech32.decode(this.bech32Address).words));
-    return ETH.encoder(address);
+    return Bech32Address.fromBech32(
+      this.bech32Address,
+      this.chainGetter.getChain(this.chainId).bech32Config.bech32PrefixAccAddr
+    ).toHex(true);
   }
 
   protected get queries(): DeepReadonly<QueriesSetBase & Queries> {
